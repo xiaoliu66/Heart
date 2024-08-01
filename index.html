@@ -79,20 +79,20 @@
                     </el-table>
 
                 </el-tab-pane>
-                <el-tab-pane label="心率" style="font-size: 14px; height: 94vh;font-family: 'Microsoft YaHei'">
+                <el-tab-pane label="实时心率" style="font-size: 14px; height: 94vh;font-family: 'Microsoft YaHei'">
 
                     <div class="heart"></div>
                     <div class="num">
                         <span style=" font-size: 30px; font-weight: bold; color: red ; float: left; margin-left: 5px;vertical-align: top;">{{heartNum}}</span>
-                        <span style="margin-left: 10px; vertical-align: -4px">次 /分  最大：</span>
-                        <span style="vertical-align: -4px">{{maxHeartNum}}</span>
-                        <span style="vertical-align: -4px">次/分 最小：</span>
-                        <span style="vertical-align: -4px">{{minHeartNum}}</span>
-                        <span style="vertical-align: -4px">次/分</span>
+                        <span style="margin-left: 10px; vertical-align: -4px">次 /分</span>
+                        <span style="margin-left: 10px; vertical-align: -4px; font-size: 30px;"><i class="el-icon-caret-top" style="color: red"></i></span>
+                        <span style="vertical-align: -4px; font-size: 30px;">{{maxHeartNum}}</span>
+                        <span style="margin-left: 10px; vertical-align: -4px; font-size: 30px;"><i class="el-icon-caret-bottom" style="color: darkgrey"></i></span>
+                        <span style="vertical-align: -4px; font-size: 30px;">{{minHeartNum}}</span>
                     </div>
 
 
-                    <div id="main" style="width: 135vh; height: 90vh; margin-left: -6%; position: absolute">
+                    <div id="main" style="width: 148vh; height: 90vh; margin-left: -7%; position: absolute">
 
                     </div>
 
