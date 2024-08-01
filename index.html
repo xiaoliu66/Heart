@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang=en>
+<head>
+    <title>PyQt5通过QWebEngineView和QWebChannel搭建交互式浏览器</title>
+    <!--加载qwebchannel.js-->
+    <script src="js/qwebchannel.js"></script>
+    <!-- 生产环境版本，优化了尺寸和速度 -->
+    <script src="js/vue.js"></script>
+    <!-- 引入样式 -->
+    <link rel="stylesheet" href="element-ui/lib/theme-chalk/index.css">
+    <link rel="stylesheet" type="text/css" href="style.css">
+    <!-- 引入组件库 -->
+    <script src="element-ui/lib/index.js"></script>
+    <script src="js/echarts.js"></script>
+    <script src="js/moment.js"></script>
+
+    <script>
+        window.onload = function () {
+            try {
+                new QWebChannel(qt.webChannelTransport, function (channel) {
+                    //将QWebChannel的实例挂载到window.PyHandler，后面在javascript中通过window.PyHandler即可调用
+                    window.PyHandler = channel.objects.PyHandler;
+                });
+            } catch (e) {
+                window.console.log(e)
+            }
+        }
+    </script>
+</head>
+<body>
+<!--<button onclick="window.PyHandler.init_home('hi,pyqt')">点击向python回调</button>-->
+<div id="app">
+    <el-container style="width: 100%;height: 100vh; border: 0px solid #eee">
+        <el-main>
+            <el-tabs type="border-card" :stretch=true tab-position="left"
+                     style="width: 99%; height: 94vh; padding-top: 3px; font-family: 'Microsoft YaHei'">
+                <el-tab-pane label="连接设备" style="font-size: 20px; height: 94vh;font-family: 'Microsoft YaHei'">
+                    <el-button icon="el-icon-search"
+                               @click="handleSearch"
+                               style="font-size: 15px; font-family: 'Microsoft YaHei'"
+                               type="primary">
+                        搜索蓝牙设备
+                    </el-button>
+
+                    <el-button type="primary" icon="el-icon-link"
+                               style="font-size: 15px; font-family: 'Microsoft YaHei'"
+                               @click="handleConnect">
+                        连接
+                    </el-button>
+
+                    <!--<el-button type="primary" icon="el-icon-link"
+                               style="font-size: 15px; font-family: 'Microsoft YaHei'"
+                               @click="getValue">
+                        获取
+                    </el-button>-->
+
+                    <el-table
+                            :data="tableData"
+                            :cell-style="rowStyle"
+                            v-loading="loading"
+                            @selection-change="handleSelectionChange"
+                            border
+                            stripe
+                            style="width: 100%; height: 90%; margin-top: 10px; font-size: 15px; font-family: 'Microsoft YaHei'">
+                        <el-table-column
+                                type="selection"
+                                width="55">
+                        </el-table-column>
+                        <el-table-column
+                                prop="address"
+                                label="蓝牙地址"
+                                align="center">
+                        </el-table-column>
+                        <el-table-column
+                                prop="name"
+                                label="蓝牙名称"
+                                align="center">
+                        </el-table-column>
+                    </el-table>
+
+                </el-tab-pane>
+                <el-tab-pane label="心率" style="font-size: 14px; height: 94vh;font-family: 'Microsoft YaHei'">
+
+                    <div class="heart"></div>
+                    <div class="num">
+                        <span style=" font-size: 30px; font-weight: bold; color: red ; float: left; margin-left: 5px;vertical-align: top;">{{heartNum}}</span>
+                        <span style="margin-left: 10px; vertical-align: -4px">次 /分  最大：</span>
+                        <span style="vertical-align: -4px">{{maxHeartNum}}</span>
+                        <span style="vertical-align: -4px">次/分 最小：</span>
+                        <span style="vertical-align: -4px">{{minHeartNum}}</span>
+                        <span style="vertical-align: -4px">次/分</span>
+                    </div>
+
+
+                    <div id="main" style="width: 135vh; height: 90vh; margin-left: -6%; position: absolute">
+
+                    </div>
+
+
+                </el-tab-pane>
+                <el-tab-pane label="角色管理">角色管理</el-tab-pane>
+                <el-tab-pane label="设置">设置</el-tab-pane>
+            </el-tabs>
+        </el-main>
+
+    </el-container>
+
+
+</div>
+<script>
+    //将方法挂载到window便于从webengineview访问
+    // window.say_hello = function (msg) {
+    //     document.getElementById('app').append("这是从python端收到的消息:" + msg);
+    // }
+
+    // 将方法挂载到window便于从webengineview访问
+    /*window.say_hello = function (msg) {
+        let info = JSON.parse(msg);
+        document.getElementById('app').append("这是从python端收到的消息:" + msg);
+        app.$data.tableData = info;
+    }*/
+
+    const app = new Vue({
+        el: '#app',
+        data: {
+            tableData: [], // 蓝牙列表数据
+            multipleSelection: [], // 勾选的蓝牙设备信息
+            loading: false,
+            heartNum: 0, // 当前心跳值
+            timeList: [], // echarts-x轴 时间
+            heartNumList: [], // echarts-y轴 心跳值
+            maxHeartNum: 0,
+            minHeartNum: 0
+
+        },
+        methods: {
+            // 搜索蓝牙设备
+            handleSearch() {
+                this.loading = true;
+                let result = window.PyHandler.initSearch('hi,pyqt');
+                console.log('handleSearch:', result)
+            },
+            rowStyle() {
+                return "text-align:center";
+            },
+            handleClick(row) {
+                console.log(row);
+            },
+            handleSelectionChange(val) {
+                this.multipleSelection = val;
+                // this.$message(JSON.stringify(val));
+            },
+            getValue() {
+                // window.PyHandler.getHeartNum()
+
+                // window.alert('蓝牙连接失败！');
+                this.$alert('这是一段内容', '标题名称', {
+                    confirmButtonText: '确定',
+                    /*callback: action => {
+                        this.$message({
+                            type: 'info',
+                            message: `action: ${action}`
+                        });
+                    }*/
+                });
+            },
+            // 连接蓝牙设备
+            handleConnect() {
+                if (this.multipleSelection.length === 0) {
+                    // this.$message.error('必须选择一个设备进行连接！');
+                    this.$notify.error({
+                        title: '错误',
+                        message: '必须选择一个设备进行连接！'
+                    });
+                } else if (this.multipleSelection.length > 1) {
+                    // this.$message.error('只能选择一个设备进行连接！');
+                    this.$notify.error({
+                        title: '错误',
+                        message: '只能选择一个设备进行连接！'
+                    });
+                } else {
+
+                    let obj = this.multipleSelection[0];
+                    // let worker = new Worker('./worker.js', {workerData: obj.address + ''});
+                    window.PyHandler.connectBluetooth(obj.address + '')
+                    // this.$message('====>' + JSON.stringify(this.multipleSelection[0]))
+
+                }
+
+            },
+            drawChart() {
+                // 基于准备好的dom，初始化echarts实例  这个和上面的main对应
+                var myChart = echarts.init(document.getElementById('main'));
+                window.addEventListener('resize', function () {
+                    myChart.resize();
+                });
+                // 指定图表的配置项和数据
+                let option = {
+                    xAxis: {
+                        type: 'category',
+                        boundaryGap: false,
+                        // data: ['1', '2', '3', '4', '5', '6', '7', '1', '2', '3', '4', '5', '6', '7','1', '2', '3', '4', '5', '6', '7','1', '2', '3', '4', '5', '6', '7']
+                        data: this.timeList
+                        // data: ["2024-07-29 22:04:48", "2024-07-29 22:04:49", "2024-07-29 22:04:50", "2024-07-29 22:04:51", "2024-07-29 22:04:52", "2024-07-29 22:04:53", "2024-07-29 22:04:54", "2024-07-29 22:04:55", "2024-07-29 22:04:56", "2024-07-29 22:04:57"]
+                    },
+                    yAxis: {
+                        type: 'value'
+                    },
+                    series: [
+                        {
+                            // data: [
+                            //     820, 932, 901, 934, 1290, 1330, 1320, 820, 932, 901, 934, 1290, 1330,
+                            //     1320
+                            // ],
+                            data: this.heartNumList,
+                            // data: ["92", "89", "89", "89", "86", "84", "84", "84", "84", "83", "92", "89", "89", "89", "86", "84", "84", "84", "84", "83","92", "89", "89", "89", "86", "84", "84","92", "89", "89", "89", "86", "84", "84"],
+                            type: 'line',
+                            smooth: false,      //true 有弧度 ，false 没弧度（直线）
+                            symbol: 'circle',   //将小圆点改成实心 不写symbol默认空心
+                            symbolSize: 5,    //小圆点的大小
+                            areaStyle: {
+                                color: {
+                                    type: 'linear',
+                                    x: 0,
+                                    y: 0,
+                                    x2: 0,
+                                    y2: 1,
+                                    // 渐变颜色
+                                    colorStops: [
+                                        {
+                                            offset: 0,
+                                            color: '#e61919'
+                                        },
+                                        {
+                                            offset: 1,
+                                            color: '#d98a92'
+                                        }
+                                    ],
+                                    global: false
+                                }
+                            },
+                            itemStyle: {
+                                normal: {
+                                    color: '#ff0000', //改变折线点的颜色
+                                    lineStyle: {
+                                        color: '#ff0000' //改变折线颜色
+                                    }
+                                }
+                            },
+                        }
+                    ]
+                };
+                // 使用刚指定的配置项和数据显示图表。
+                myChart.setOption(option);
+                myChart.resize();
+            },
+        },
+        mounted() {
+            // setTimeout(() => {
+            //     this.drawChart();
+            // }, 1)
+            this.drawChart();
+
+            // 将方法挂载到window便于从webengineview访问
+            // 搜索蓝牙设备回调函数 python调用
+            window.initSearch = function (msg) {
+                let info = JSON.parse(msg);
+                console.log("-------> info" + msg)
+                // document.getElementById('app').append("这是从python端收到的消息:" + msg);
+                if (info.length === 0) {
+                    app.$notify.error({
+                        title: 'error',
+                        message: '未搜索到蓝牙设备！'
+                    });
+                }
+                setTimeout(() => {
+                    app.$data.loading = false;
+                }, 2000);
+                app.$data.tableData = info;
+
+            }
+
+            // 获取连接信息回调函数
+            window.getConnectInfo = function (info) {
+                // document.getElementById('app').append("info:" + info);
+                if ('true' === info) {
+                    app.$notify.success({
+                        title: 'success',
+                        message: '蓝牙设备连接成功！'
+                    });
+                } else if ('false' === info) {
+                    app.$alert('蓝牙设备连接失败，请重新连接！', '警告', {
+                    confirmButtonText: '确定',
+                });
+                }
+
+            }
+
+            // 获取心跳值回调函数
+            window.getHeartNum = function (num) {
+                num = parseInt(num)
+                let date = new Date();
+                let time = moment(date).format("HH:mm:ss")
+                console.log('=====> time：' + time)
+                /*app.$notify.success({
+                    title: 'success',
+                    message: num
+                });*/
+                app.$data.heartNum = num;
+                app.$data.heartNumList.push(num)
+                app.$data.timeList.push(time)
+                // 初始化
+                if (app.$data.minHeartNum === 0 && app.$data.maxHeartNum) {
+                    app.$data.minHeartNum = num
+                    app.$data.maxHeartNum = num
+                }
+
+                if (num > app.$data.maxHeartNum) {
+                    app.$data.maxHeartNum = num
+                } else if (num < app.$data.minHeartNum) {
+                    app.$data.minHeartNum = num
+                }
+                app.drawChart();
+                console.log(app.$data.heartNumList.length)
+                console.log(app.$data.timeList.length)
+            }
+
+        }
+    });
+
+
+</script>
+
+
+</body>
+<style>
+
+</style>
+</html>
