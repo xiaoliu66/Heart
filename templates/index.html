@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <!-- 生产环境版本，优化了尺寸和速度 -->
+<!--    <script src="../static/js/vue.js"></script>-->
+    <script src="https://cdn.jsdelivr.net/npm/vue@2"></script>
+    <!-- 引入样式 -->
+    <link rel="stylesheet" href="../static/element-ui/lib/theme-chalk/index.css" type="text/css">
+    <link rel="stylesheet" href="../static/style.css" type="text/css" >
+    <!-- 引入组件库 -->
+    <script src="../static/element-ui/lib/index.js"></script>
+
+    <script src="../static/js/moment.js"></script>
+<!--    <script src="../static/js/axios/dist/axios.js"></script>-->
+    <script src="../static/js/axios.js"></script>
+</head>
+<body>
+<div id="app" style="height: 200px; width: 1000px">
+
+    <div class="heart"></div>
+    <div class="num">
+        <!--为了区别flask的模板语法和vue.js的不同 设置标记，否则vue的不生效-->
+        {% raw %}
+        <span style=" font-size: 30px; font-weight: bold; color: red ; float: left; margin-left: 5px;vertical-align: top;">
+            {{heartNum}}
+        </span>
+        <!--<span style="margin-left: 10px; vertical-align: -4px">次 /分</span>-->
+        <span style="margin-left: 10px; vertical-align: -4px; font-size: 30px;"><i class="el-icon-caret-top"
+                                                                                   style="color: red"></i></span>
+        <span style="vertical-align: -4px; font-size: 30px; font-weight: bold; color: yellow">{{maxHeartNum}}</span>
+        <span style="margin-left: 10px; vertical-align: -4px; font-size: 30px;"><i class="el-icon-caret-bottom"
+                                                                                   style="color: darkgrey"></i></span>
+        <span style="vertical-align: -4px; font-size: 30px; font-weight: bold; color: lightseagreen">{{minHeartNum}}</span>
+        {% endraw %}
+    </div>
+</div>
+</body>
+<script>
+    const app = new Vue({
+        el: '#app',
+        data: {
+            loading: false,
+            heartNum: 0, // 当前心跳值
+            maxHeartNum: 0,
+            minHeartNum: 0,
+            timer: null
+
+        },
+        methods: {
+            getHeartInfo() {
+                axios.get('http://127.0.0.1:80/getHeartNum').then(res => {
+                    console.log(res.data)
+                    if (res.data !== null) {
+                        this.heartNum = res.data.value;
+                        this.maxHeartNum = res.data.maxValue;
+                        this.minHeartNum = res.data.minValue;
+                    }
+                })
+            }
+        },
+        created() {
+            this.timer = setInterval(() => {
+                this.getHeartInfo();
+            }, 1000);
+        },
+        mounted() {
+
+        }
+    });
+</script>
+</html>

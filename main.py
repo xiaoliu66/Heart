@@ -3,7 +3,7 @@ import os
 import threading
 import urllib.request
 from datetime import time
-
+from diskcache import Cache
 from PyQt5 import QtWebEngineWidgets
 from PyQt5.QtWidgets import QApplication, QDesktopWidget
 from PyQt5.QtCore import QObject, pyqtSlot, QUrl, Qt, QPoint, QThread
@@ -36,6 +36,7 @@ async def searchBluetoothDevices():
     print(list)
     return json.dumps(list)
 
+
 # 实时获取心跳值
 async def notification_handler(characteristic: BleakGATTCharacteristic, data: bytearray):
     global value
@@ -50,6 +51,18 @@ async def notification_handler(characteristic: BleakGATTCharacteristic, data: by
     #     1.\x06 对应的十进制值是 6。 暂时不知道这个值有啥用
     #     2.\x54 对应的十进制值是 84。  心跳的值， T 的ascii 的十六进制是54
     value = int(data.hex().split('06')[1], 16);
+    cache.set('value', value)
+    maxValue = cache.get('maxValue')
+    minValue = cache.get('minValue')
+
+    if maxValue == 0 and minValue == 0:
+        cache.set('maxValue', value)
+        cache.set('minValue', value)
+
+    if value > maxValue:
+        cache.set('maxValue', value)
+    elif value < minValue:
+        cache.set('minValue', value)
 
     print('❤:', value)
     view.page().runJavaScript("window.getHeartNum('%s')" % value)
@@ -116,6 +129,7 @@ class WebEngine(QWebEngineView):
         self.resize(1200, 800)
         # cp = QDesktopWidget().availableGeometry().center()
         # self.move(QPoint(cp.x() - self.width() / 2, cp.y() - self.height() / 2))
+
 
 # 开启另一个线程去连接蓝牙 实时获取心跳值
 class myThread(threading.Thread):
@@ -186,6 +200,10 @@ class myThread(threading.Thread):
 
 
 if __name__ == '__main__':
+    # 实例化缓存对象，指定缓存目录
+    cache = Cache('/cache')
+    cache.set('maxValue', 0)
+    cache.set('minValue', 0)
     # 加载程序主窗口
     app = QApplication(sys.argv)
     view = WebEngine()
