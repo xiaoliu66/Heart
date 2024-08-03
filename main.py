@@ -202,6 +202,7 @@ class myThread(threading.Thread):
 if __name__ == '__main__':
     # 实例化缓存对象，指定缓存目录
     cache = Cache('/cache')
+    cache.set('value', 0)
     cache.set('maxValue', 0)
     cache.set('minValue', 0)
     # 加载程序主窗口

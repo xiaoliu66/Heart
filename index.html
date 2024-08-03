@@ -2,10 +2,10 @@
 <html lang=en>
 <head>
     <title>PyQt5通过QWebEngineView和QWebChannel搭建交互式浏览器</title>
-    <!--加载qwebchannel.js-->
-    <script src="static/js/qwebchannel.js"></script>
     <!-- 生产环境版本，优化了尺寸和速度 -->
     <script src="static/js/vue.js"></script>
+    <!--加载qwebchannel.js-->
+    <script src="static/js/qwebchannel.js"></script>
     <!-- 引入样式 -->
     <link rel="stylesheet" href="static/element-ui/lib/theme-chalk/index.css">
     <link rel="stylesheet" type="text/css" href="style.css">
@@ -30,24 +30,26 @@
 <body>
 <!--<button onclick="window.PyHandler.init_home('hi,pyqt')">点击向python回调</button>-->
 <div id="app">
-    <el-container style="width: 100%;height: 100vh; border: 0px solid #eee">
+    <el-container style="width: 100%;height: 100vh; border: 0px solid #eee" :v-loading="dataLoaded">
         <el-main>
-            <el-tabs type="border-card" :stretch=true tab-position="left"
+            <el-tabs type="border-card" :stretch=true @tab-click="handleClickTab" tab-position="left"
                      style="width: 99%; height: 94vh; padding-top: 3px; font-family: 'Microsoft YaHei'">
-                <el-tab-pane label="连接设备" style="font-size: 20px; height: 94vh;font-family: 'Microsoft YaHei'">
-                    <el-button icon="el-icon-search"
-                               @click="handleSearch"
-                               style="font-size: 15px; font-family: 'Microsoft YaHei'"
-                               type="primary">
-                        搜索蓝牙设备
-                    </el-button>
+                <el-tab-pane label="连接设备" style="font-size: 20px; height: 94vh;font-family: 'Microsoft YaHei'"
+                             :key="'first'" :lazy="true">
+                    <template>
+                        <el-button icon="el-icon-search"
+                                   @click="handleSearch"
+                                   style="font-size: 15px; font-family: 'Microsoft YaHei'"
+                                   type="primary">
+                            搜索蓝牙设备
+                        </el-button>
 
-                    <el-button type="primary" icon="el-icon-link"
-                               style="font-size: 15px; font-family: 'Microsoft YaHei'"
-                               @click="handleConnect">
-                        连接
-                    </el-button>
-
+                        <el-button type="primary" icon="el-icon-link"
+                                   style="font-size: 15px; font-family: 'Microsoft YaHei'"
+                                   @click="handleConnect">
+                            连接
+                        </el-button>
+                    </template>
                     <!--<el-button type="primary" icon="el-icon-link"
                                style="font-size: 15px; font-family: 'Microsoft YaHei'"
                                @click="getValue">
@@ -79,33 +81,57 @@
                     </el-table>
 
                 </el-tab-pane>
-                <el-tab-pane label="实时心率" style="font-size: 14px; height: 94vh;font-family: 'Microsoft YaHei'">
-
-                    <div class="heart"></div>
-                    <div class="num">
-                        <span style=" font-size: 30px; font-weight: bold; color: red ; float: left; margin-left: 5px;vertical-align: top;">{{heartNum}}</span>
-                        <span style="margin-left: 10px; vertical-align: -4px">次 /分</span>
-                        <span style="margin-left: 10px; vertical-align: -4px; font-size: 30px;"><i class="el-icon-caret-top" style="color: red"></i></span>
-                        <span style="vertical-align: -4px; font-size: 30px;">{{maxHeartNum}}</span>
-                        <span style="margin-left: 10px; vertical-align: -4px; font-size: 30px;"><i class="el-icon-caret-bottom" style="color: darkgrey"></i></span>
-                        <span style="vertical-align: -4px; font-size: 30px;">{{minHeartNum}}</span>
-                    </div>
-
-
-                    <div id="main" style="width: 148vh; height: 90vh; margin-left: -7%; position: absolute">
-
-                    </div>
+                <el-tab-pane label="实时心率" style="font-size: 14px; height: 94vh;font-family: 'Microsoft YaHei'"
+                             :key="'second'" :lazy="true">
+                    <template>
+                        <div class="heart"></div>
+                        <div class="num">
+                            <span style=" font-size: 30px; font-weight: bold; color: red ; float: left; margin-left: 5px;vertical-align: top;">{{heartNum}}</span>
+                            <span style="margin-left: 10px; vertical-align: -4px">次 /分</span>
+                            <span style="margin-left: 10px; vertical-align: -4px; font-size: 30px;"><i
+                                    class="el-icon-caret-top" style="color: red"></i></span>
+                            <span style="vertical-align: -4px; font-size: 30px;">{{maxHeartNum}}</span>
+                            <span style="margin-left: 10px; vertical-align: -4px; font-size: 30px;"><i
+                                    class="el-icon-caret-bottom" style="color: darkgrey"></i></span>
+                            <span style="vertical-align: -4px; font-size: 30px;">{{minHeartNum}}</span>
+                        </div>
 
 
+                        <div id="main" style="width: 148vh; height: 90vh; margin-left: -7%; position: absolute">
+
+                        </div>
+                    </template>
                 </el-tab-pane>
-                <el-tab-pane label="插件"></el-tab-pane>
-                <el-tab-pane label="设置">设置</el-tab-pane>
+                <el-tab-pane label="OBS插件" :lazy="true">
+                    <template>
+                        <p>该功能会启动一个网页服务，将该网址输入到Obs 来源->浏览器中可实现实时心率推送</p>
+                        <el-form ref="form" :model="form" label-width="80px">
+                            <el-form-item label="端口号" prop="port">
+                                <el-input-number v-model="form.port" :min="1" :max="65535"/>
+                            </el-form-item>
+
+                            <el-form-item label="地址">
+                                <div v-cloak>{{desc}} &nbsp;&nbsp;<el-button @click="copy(desc)">点我复制
+                                </el-button>
+                                </div>
+                            </el-form-item>
+
+                            <el-form-item>
+                                <el-button type="primary" @click="submitForm('form')">立即创建</el-button>
+                                <el-button>取消</el-button>
+                            </el-form-item>
+                        </el-form>
+                    </template>
+                </el-tab-pane>
+                <el-tab-pane label="设置" :key="'fourth'">
+                    <template>
+                        设置
+                    </template>
+                </el-tab-pane>
             </el-tabs>
         </el-main>
 
     </el-container>
-
-
 </div>
 <script>
     //将方法挂载到window便于从webengineview访问
@@ -123,6 +149,7 @@
     const app = new Vue({
         el: '#app',
         data: {
+            dataLoaded: false,
             tableData: [], // 蓝牙列表数据
             multipleSelection: [], // 勾选的蓝牙设备信息
             loading: false,
@@ -130,8 +157,22 @@
             timeList: [], // echarts-x轴 时间
             heartNumList: [], // echarts-y轴 心跳值
             maxHeartNum: 0,
-            minHeartNum: 0
+            minHeartNum: 0,
+            form: {
+                port: 8888,
+                //desc: 'http://localhost:' + this.form.port
+            },
+            activeName: 'first',
+            isFirst: true,
+            isSecond: false,
+            isThird: false,
+            ifFourth: false,
 
+        },
+        computed: {
+            desc: function () {
+                return ('http://localhost:' + this.form.port);
+            }
         },
         methods: {
             // 搜索蓝牙设备
@@ -140,11 +181,60 @@
                 let result = window.PyHandler.initSearch('hi,pyqt');
                 console.log('handleSearch:', result)
             },
+            handleClickTab(tab) {
+                console.log('----tab', tab)
+                if (tab.name === 'first') {
+                    this.isFirst = true
+                    this.isSecond = false
+                    this.isThird = false
+                    this.ifFourth = false
+                } else if (tab.name === 'second') {
+                    this.isFirst = false
+                    this.isSecond = true
+                    this.isThird = false
+                    this.ifFourth = false
+                } else if (tab.name === 'third') {
+                    this.isFirst = false
+                    this.isSecond = false
+                    this.isThird = true
+                    this.ifFourth = false
+                } else if (tab.name === 'fourth') {
+                    this.isFirst = false
+                    this.isSecond = false
+                    this.isThird = false
+                    this.ifFourth = true
+                }
+            },
+            // 点击复制
+            copy(data) {
+                let url = data;
+                let oInput = document.createElement('input');
+                oInput.value = url;
+                document.body.appendChild(oInput);
+                oInput.select(); // 选择对象;
+                console.log(oInput.value)
+                document.execCommand("Copy"); // 执行浏览器复制命令
+                this.$message({
+                    message: '复制成功',
+                    type: 'success'
+                });
+                oInput.remove()
+            },
             rowStyle() {
                 return "text-align:center";
             },
             handleClick(row) {
                 console.log(row);
+            },
+            submitForm(formName) {
+                this.$refs[formName].validate((valid) => {
+                    if (valid) {
+                        alert('submit!');
+                    } else {
+                        console.log('error submit!!');
+                        return false;
+                    }
+                });
             },
             handleSelectionChange(val) {
                 this.multipleSelection = val;
@@ -255,11 +345,17 @@
                 myChart.resize();
             },
         },
+        created() {
+            // 延时加载，否则未渲染完的页面会出现，影响应用体验 （该方法没有用，要使用template将页面包裹起来）
+            /*setTimeout(() => {
+                this.dataLoaded = true;
+            }, 100)*/
+        },
         mounted() {
-            // setTimeout(() => {
-            //     this.drawChart();
-            // }, 1)
-            this.drawChart();
+            setTimeout(() => {
+                this.drawChart();
+            }, 1000)
+            //this.drawChart();
 
             // 将方法挂载到window便于从webengineview访问
             // 搜索蓝牙设备回调函数 python调用
@@ -290,8 +386,8 @@
                     });
                 } else if ('false' === info) {
                     app.$alert('蓝牙设备连接失败，请重新连接！', '警告', {
-                    confirmButtonText: '确定',
-                });
+                        confirmButtonText: '确定',
+                    });
                 }
 
             }
@@ -330,8 +426,6 @@
 
 
 </script>
-
-
 </body>
 <style>
 
