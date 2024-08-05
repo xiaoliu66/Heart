@@ -1,7 +1,10 @@
+import os
+import sys
+import time
+
 from flask import Flask
 from flask import render_template  # 渲染
 from diskcache import Cache
-
 
 app = Flask(__name__)
 
@@ -13,6 +16,7 @@ def news():
 
 @app.route('/getHeartNum', methods=['get'])
 def getHeartNum():
+    cache = Cache('/cache')
     value = cache.get('value')
     maxValue = cache.get('maxValue')
     minValue = cache.get('minValue')
@@ -22,6 +26,15 @@ def getHeartNum():
     return heartInfo
 
 
+def main():
+    app.run(host='127.0.0.1', debug=True, port=8888, use_reloader=False)  # 127.0.0.1 回路 自己返回自己
+
+
+# def exit():
+#     # os._exit(0)
+#     # sys.exit(0)
+#     exit()
+
 if __name__ == '__main__':
-    cache = Cache('/cache')
-    app.run(host='127.0.0.1', debug=True, port=80)  # 127.0.0.1 回路 自己返回自己
+    # cache = Cache('/cache')
+    main()

@@ -1,8 +1,10 @@
+import ctypes
+import inspect
 import sys
 import os
 import threading
 import urllib.request
-from datetime import time
+import time, datetime
 from diskcache import Cache
 from PyQt5 import QtWebEngineWidgets
 from PyQt5.QtWidgets import QApplication, QDesktopWidget
@@ -12,6 +14,7 @@ from PyQt5.QtWebEngineWidgets import QWebEngineView, QWebEngineSettings, QWebEng
 import json
 import asyncio
 from bleak import BleakScanner, BleakClient, BleakGATTCharacteristic
+import myapp
 
 # 设备的Characteristic UUID
 par_notification_characteristic = "00002a37-0000-1000-8000-00805f9b34fb"
@@ -64,7 +67,7 @@ async def notification_handler(characteristic: BleakGATTCharacteristic, data: by
     elif value < minValue:
         cache.set('minValue', value)
 
-    print('❤:', value)
+    # print('❤:', value)
     view.page().runJavaScript("window.getHeartNum('%s')" % value)
     return value
     # print(data.decode('ascii'))
@@ -118,6 +121,32 @@ class CallHandler(QObject):
         print("getHeartNum:", value)
         view.page().runJavaScript("window.getHeartNum('%s')" % value)
         return value
+
+    @pyqtSlot()
+    def startServer(self):
+        print('----- startServer -----')
+        global server
+        server = myServer(2, "Server-1", 0);
+        try:
+            server.start()
+        except Exception as e:
+            print(f"An error occurred: {e}")
+            info = 'false'
+            print(info)
+            view.page().runJavaScript("window.startServer('%s')" % info)
+        else:
+            info = 'true'
+            print(info)
+            server.terminate()
+            view.page().runJavaScript("window.startServer('%s')" % info)
+
+    @pyqtSlot()
+    def stopServer(self):
+        print('----- stopServer -----')
+        # myapp.exit()
+        stop_thread(server)
+        info = 'true'
+        view.page().runJavaScript("window.stopServer('%s')" % info)
 
 
 class WebEngine(QWebEngineView):
@@ -197,6 +226,41 @@ class myThread(threading.Thread):
             await disconnected_event.wait()  # 休眠直到设备断开连接，有延迟。此处为监听设备直到断开为止
             # await asyncio.sleep(10.0)           #程序监听的时间，此处为10秒
             # await client.stop_notify(par_notification_characteristic)
+
+
+# https://blog.csdn.net/hp_cpp/article/details/83040162 强行停止python子线程最佳方案
+def _async_raise(tid, exctype):
+    """raises the exception, performs cleanup if needed"""
+    tid = ctypes.c_long(tid)
+    if not inspect.isclass(exctype):
+        exctype = type(exctype)
+    res = ctypes.pythonapi.PyThreadState_SetAsyncExc(tid, ctypes.py_object(exctype))
+    if res == 0:
+        raise ValueError("invalid thread id")
+    elif res != 1:
+        # """if it returns a number greater than one, you're in trouble,
+        # and you should call it again with exc=NULL to revert the effect"""
+        ctypes.pythonapi.PyThreadState_SetAsyncExc(tid, None)
+        raise SystemError("PyThreadState_SetAsyncExc failed")
+
+
+def stop_thread(thread):
+    _async_raise(thread.ident, SystemExit)
+
+
+class myServer(threading.Thread):
+    def __init__(self, threadID, name, delay):
+        print("Starting myServer")
+        threading.Thread.__init__(self)
+        self.threadID = threadID
+        self.name = name
+        self.delay = delay
+
+    def run(self):
+        myapp.main()
+
+    def terminate(self):
+        pass
 
 
 if __name__ == '__main__':
