@@ -47,9 +47,14 @@
 
                         <el-button type="primary" icon="el-icon-link"
                                    :loading="connectLoading"
+                                   :style="{ display: visibleConnect }"
                                    style="font-size: 15px; font-family: 'Microsoft YaHei'"
                                    @click="handleConnect">
                             连接
+                        </el-button>
+                        <el-button type="danger" plain @click="stopConnect" :loading="stopConnectLoading"
+                                   :style="{ display: visibleStopConnect }" icon="el-icon-video-pause">
+                            断开
                         </el-button>
                     </template>
                     <!--<el-button type="primary" icon="el-icon-link"
@@ -172,6 +177,9 @@
             activeName: 'first',
             searchLoading: false,
             connectLoading: false,
+            stopConnectLoading: false,
+            visibleConnect: '',
+            visibleStopConnect: 'none',
             startServerLoading: false,
             stopServerLoading: false,
             visibleStartServer: '',
@@ -273,6 +281,12 @@
 
                 }
 
+            },
+            stopConnect() {
+                this.stopConnectLoading = true
+                setTimeout(() => {
+                    window.PyHandler.disconnectBluetooth('');
+                }, 2000)
             },
             drawChart() {
                 // 基于准备好的dom，初始化echarts实例  这个和上面的main对应
@@ -379,6 +393,8 @@
                         title: 'success',
                         message: '蓝牙设备连接成功！'
                     });
+                    app.$data.visibleConnect = 'none';
+                    app.$data.visibleStopConnect = '';
                 } else if ('false' === info) {
                     app.$alert('蓝牙设备连接失败，请重新连接！', '警告', {
                         confirmButtonText: '确定',
@@ -450,6 +466,24 @@
                 }
 
                 app.$data.stopServerLoading = false;
+            }
+
+            // 断开蓝牙连接
+            window.stopConnect = function (info) {
+                if ('true' === info) {
+                    app.$notify.warning({
+                        title: 'warning',
+                        message: '蓝牙已断开！'
+                    });
+                    app.$data.visibleConnect = ''
+                    app.$data.visibleStopConnect = 'none'
+                } else if ('false' === info) {
+                    app.$alert('服务退出失败，请重新结束！', '警告', {
+                        confirmButtonText: '确定',
+                    });
+                }
+
+                app.$data.stopConnectLoading = false;
             }
         }
     });

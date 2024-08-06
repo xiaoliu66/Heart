@@ -80,7 +80,7 @@ class CallHandler(QObject):
     def __init__(self):
         super(CallHandler, self).__init__()
 
-    # 搜索附件的蓝牙设备信息并返回给前端
+    # 异步搜索附近的蓝牙设备信息
     @pyqtSlot(str)  # 第一个参数即为回调时携带的参数类型
     def initSearch(self, str_args):
         print('------> initSearch......')
@@ -116,7 +116,7 @@ class CallHandler(QObject):
         print(str_args)  # 查看参数
         device_address = str_args
         print('thread %s is running...' % threading.current_thread().name)
-
+        global thread1
         thread1 = myThread(1, "Thread-1", 0, device_address);
         try:
             thread1.start()
@@ -128,6 +128,11 @@ class CallHandler(QObject):
             print('-------')
         # asyncio.run(self.startConnect(device_address))
 
+    @pyqtSlot()
+    def disconnectBluetooth(self):
+        stop_thread(thread1)
+        info = 'true'
+        view.page().runJavaScript("window.stopConnect('%s')" % info)
     @pyqtSlot(result=int)
     def getHeartNum(self):
         print("getHeartNum:", value)
@@ -160,6 +165,7 @@ class CallHandler(QObject):
         info = 'true'
         view.page().runJavaScript("window.stopServer('%s')" % info)
 
+    # 调用js代码，将搜索到的蓝牙信息返回给前端
     @pyqtSlot()
     def getBlueInfo(self):
         list = []
@@ -320,7 +326,7 @@ def _async_raise(tid, exctype):
 def stop_thread(thread):
     _async_raise(thread.ident, SystemExit)
 
-
+# 开启另一个线程去启动web服务
 class myServer(threading.Thread):
     def __init__(self, threadID, name, delay):
         print("Starting myServer")
