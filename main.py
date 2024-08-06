@@ -24,7 +24,8 @@ par_notification_characteristic = "00002a37-0000-1000-8000-00805f9b34fb"
 device_address = ""
 
 
-# 搜索蓝牙设备信息
+# 搜索蓝牙设备信息 官网不建议用
+# 这些方法对于简单的程序来说很方便，但不建议用于 更高级的用例，如长时间运行的程序、GUI 或连接到 多个设备。
 async def searchBluetoothDevices():
     devices = await BleakScanner.discover()
     list = [];
@@ -80,17 +81,21 @@ class CallHandler(QObject):
         super(CallHandler, self).__init__()
 
     # 搜索附件的蓝牙设备信息并返回给前端
-    @pyqtSlot(str, result=str)  # 第一个参数即为回调时携带的参数类型
+    @pyqtSlot(str)  # 第一个参数即为回调时携带的参数类型
     def initSearch(self, str_args):
         print('------> initSearch......')
         print(str_args)  # 查看参数
+        global search_thread
+        search_thread = mySearchThread(11, "search-Thread", 0);
+        search_thread.start()
 
-        msg = asyncio.run(searchBluetoothDevices())
+
+        # msg = asyncio.run(searchBluetoothDevices())
         # view.page().runJavaScript("alert('%s')" % msg)
-        view.page().runJavaScript("window.initSearch('%s')" % msg)
+        # view.page().runJavaScript("window.initSearch('%s')" % msg)
         # info = '蓝牙设备连接成功！'
         # view.page().runJavaScript("window.get_info('%s')" % info)
-        return 'hello, Python'
+        # return 'hello, Python'
 
     def getInfo(self):
         import socket, platform
@@ -113,7 +118,14 @@ class CallHandler(QObject):
         print('thread %s is running...' % threading.current_thread().name)
 
         thread1 = myThread(1, "Thread-1", 0, device_address);
-        thread1.start()
+        try:
+            thread1.start()
+        except Exception as e:
+            print(f"An error occurred: {e}")
+            info = 'false'
+            view.page().runJavaScript("window.getConnectInfo('%s')" % info)
+        else:
+            print('-------')
         # asyncio.run(self.startConnect(device_address))
 
     @pyqtSlot(result=int)
@@ -148,6 +160,18 @@ class CallHandler(QObject):
         info = 'true'
         view.page().runJavaScript("window.stopServer('%s')" % info)
 
+    @pyqtSlot()
+    def getBlueInfo(self):
+        list = []
+        data = cache.get("dict")
+        if data is not None:
+            stop_thread(search_thread)
+            for key, value in data.items():
+                bluetooth_info = {"address": key, "name": value}
+                list.append(bluetooth_info)
+            print("list", list)
+            view.page().runJavaScript("window.initSearch('%s')" % json.dumps(list))
+
 
 class WebEngine(QWebEngineView):
     def __init__(self):
@@ -158,6 +182,55 @@ class WebEngine(QWebEngineView):
         self.resize(1200, 800)
         # cp = QDesktopWidget().availableGeometry().center()
         # self.move(QPoint(cp.x() - self.width() / 2, cp.y() - self.height() / 2))
+
+
+# 开启另一个线程去搜索蓝牙设备 不阻塞主线程
+class mySearchThread(threading.Thread):
+    def __init__(self, threadID, name, delay):
+        threading.Thread.__init__(self)
+        self.threadID = threadID
+        self.name = name
+        self.delay = delay
+
+    def run(self):
+        print('thread %s is running...' % threading.current_thread().name)
+        # self.result = asyncio.run(self.searchBluetoothDevices())
+        asyncio.run(self.getOtherDeviceInfo())
+        # print("msg：", self.result)
+
+
+        # runJavaScript 不能在子线程中运行，否则程序会直接退出，也没有报错信息
+        # view.page().runJavaScript("window.initSearch('%s')" % msg)
+
+    # BleakScanner 官网给的例子 https://bleak.readthedocs.io/en/latest/api/scanner.html#bleak.BleakScanner
+    async def getOtherDeviceInfo(self):
+        stop_event = asyncio.Event()
+        dict = {}
+        cache.delete("list")
+
+        # add something that calls stop_event.set()
+        # result = cache.get("list")
+        # while result is not None:
+        #     stop_event.set()
+        def callback(device, advertising_data):
+            # do something with incoming data
+            # print('device', device)
+
+            name = ''
+            if (device.name is not None):
+                name = device.name
+
+            dict.update({device.address: name})
+
+            print('dict---->', dict)
+            cache.set('dict', dict)
+
+        async with BleakScanner(callback) as scanner:
+            # list = scanner.discovered_devices
+            # print(list)
+            # Important! Wait for an event to trigger stop, otherwise scanner
+            # will stop immediately.
+            await stop_event.wait()
 
 
 # 开启另一个线程去连接蓝牙 实时获取心跳值

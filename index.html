@@ -38,6 +38,7 @@
                              :key="'first'" :lazy="true">
                     <template>
                         <el-button icon="el-icon-search"
+                                   :loading="searchLoading"
                                    @click="handleSearch"
                                    style="font-size: 15px; font-family: 'Microsoft YaHei'"
                                    type="primary">
@@ -45,6 +46,7 @@
                         </el-button>
 
                         <el-button type="primary" icon="el-icon-link"
+                                   :loading="connectLoading"
                                    style="font-size: 15px; font-family: 'Microsoft YaHei'"
                                    @click="handleConnect">
                             连接
@@ -168,6 +170,8 @@
                 //desc: 'http://localhost:' + this.form.port
             },
             activeName: 'first',
+            searchLoading: false,
+            connectLoading: false,
             startServerLoading: false,
             stopServerLoading: false,
             visibleStartServer: '',
@@ -183,8 +187,12 @@
             // 搜索蓝牙设备
             handleSearch() {
                 this.loading = true;
+                this.searchLoading = true;
                 let result = window.PyHandler.initSearch('hi,pyqt');
                 console.log('handleSearch:', result)
+                setTimeout(() => {
+                    window.PyHandler.getBlueInfo('')
+                }, 3000)
             },
             handleClickTab(tab) {
                 console.log('----tab', tab)
@@ -258,6 +266,7 @@
                 } else {
 
                     let obj = this.multipleSelection[0];
+                    this.connectLoading = true;
                     // let worker = new Worker('./worker.js', {workerData: obj.address + ''});
                     window.PyHandler.connectBluetooth(obj.address + '')
                     // this.$message('====>' + JSON.stringify(this.multipleSelection[0]))
@@ -341,7 +350,7 @@
         mounted() {
             setTimeout(() => {
                 this.drawChart();
-            }, 1000)
+            }, 500)
             //this.drawChart();
 
             // 将方法挂载到window便于从webengineview访问
@@ -349,18 +358,17 @@
             window.initSearch = function (msg) {
                 let info = JSON.parse(msg);
                 console.log("-------> info" + msg)
-                // document.getElementById('app').append("这是从python端收到的消息:" + msg);
+                //document.getElementById('app').append("这是从python端收到的消息:" + msg);
                 if (info.length === 0) {
                     app.$notify.error({
                         title: 'error',
-                        message: '未搜索到蓝牙设备！'
+                        message: '未搜索到蓝牙设备,请重试！'
                     });
+                } else if (info !== undefined && info.length > 0) {
+                    app.$data.tableData = info;
                 }
-                setTimeout(() => {
-                    app.$data.loading = false;
-                }, 2000);
-                app.$data.tableData = info;
-
+                app.$data.loading = false;
+                app.$data.searchLoading = false;
             }
 
             // 获取连接信息回调函数
@@ -376,7 +384,7 @@
                         confirmButtonText: '确定',
                     });
                 }
-
+                app.$data.connectLoading = false;
             }
 
             // 获取心跳值回调函数
