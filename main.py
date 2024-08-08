@@ -4,17 +4,18 @@ import sys
 import os
 import threading
 import urllib.request
-import time, datetime
+
+import websocket
 from diskcache import Cache
-from PyQt5 import QtWebEngineWidgets
-from PyQt5.QtWidgets import QApplication, QDesktopWidget
-from PyQt5.QtCore import QObject, pyqtSlot, QUrl, Qt, QPoint, QThread
+from PyQt5.QtWidgets import QApplication
+from PyQt5.QtCore import QObject, pyqtSlot, QUrl, Qt
 from PyQt5.QtWebChannel import QWebChannel
-from PyQt5.QtWebEngineWidgets import QWebEngineView, QWebEngineSettings, QWebEnginePage
+from PyQt5.QtWebEngineWidgets import QWebEngineView
 import json
 import asyncio
 from bleak import BleakScanner, BleakClient, BleakGATTCharacteristic
 import myapp
+from util.MyWebsocketServer import MyWebsocketServer
 
 # 设备的Characteristic UUID
 par_notification_characteristic = "00002a37-0000-1000-8000-00805f9b34fb"
@@ -89,7 +90,6 @@ class CallHandler(QObject):
         search_thread = mySearchThread(11, "search-Thread", 0);
         search_thread.start()
 
-
         # msg = asyncio.run(searchBluetoothDevices())
         # view.page().runJavaScript("alert('%s')" % msg)
         # view.page().runJavaScript("window.initSearch('%s')" % msg)
@@ -133,17 +133,18 @@ class CallHandler(QObject):
         stop_thread(thread1)
         info = 'true'
         view.page().runJavaScript("window.stopConnect('%s')" % info)
+
     @pyqtSlot(result=int)
     def getHeartNum(self):
         print("getHeartNum:", value)
         view.page().runJavaScript("window.getHeartNum('%s')" % value)
         return value
 
-    @pyqtSlot()
-    def startServer(self):
-        print('----- startServer -----')
+    @pyqtSlot(str)
+    def startServer(self, port):
+        print('----- startServer ----- port: ---', port)
         global server
-        server = myServer(2, "Server-1", 0);
+        server = myServer(2, "Server-1", 0, port);
         try:
             server.start()
         except Exception as e:
@@ -203,7 +204,6 @@ class mySearchThread(threading.Thread):
         # self.result = asyncio.run(self.searchBluetoothDevices())
         asyncio.run(self.getOtherDeviceInfo())
         # print("msg：", self.result)
-
 
         # runJavaScript 不能在子线程中运行，否则程序会直接退出，也没有报错信息
         # view.page().runJavaScript("window.initSearch('%s')" % msg)
@@ -326,20 +326,34 @@ def _async_raise(tid, exctype):
 def stop_thread(thread):
     _async_raise(thread.ident, SystemExit)
 
+
 # 开启另一个线程去启动web服务
 class myServer(threading.Thread):
+    def __init__(self, threadID, name, delay, port):
+        print(f"Starting myServer port:{port}")
+        threading.Thread.__init__(self)
+        self.threadID = threadID
+        self.name = name
+        self.delay = delay
+        self.port = port
+
+    def run(self):
+        myapp.main(self.port)
+
+    def terminate(self):
+        pass
+
+
+class myWebSocketServer(threading.Thread):
     def __init__(self, threadID, name, delay):
-        print("Starting myServer")
         threading.Thread.__init__(self)
         self.threadID = threadID
         self.name = name
         self.delay = delay
 
     def run(self):
-        myapp.main()
-
-    def terminate(self):
-        pass
+        # 启动websocket服务端
+        MyWebsocketServer.main()
 
 
 if __name__ == '__main__':
@@ -348,6 +362,9 @@ if __name__ == '__main__':
     cache.set('value', 0)
     cache.set('maxValue', 0)
     cache.set('minValue', 0)
+
+    webSocketServer = MyWebsocketServer("localhost", 8000)
+    webSocketServer.run()
     # 加载程序主窗口
     app = QApplication(sys.argv)
     view = WebEngine()

@@ -54,7 +54,7 @@ var QWebChannelMessageTypes = {
 
 var QWebChannel = function(transport, initCallback)
 {
-    console.log('---->' + transport)
+    console.log(' ----> transport' + JSON.stringify(transport))
     if (typeof transport !== "object" || typeof transport.send !== "function") {
         console.error("The QWebChannel expects a transport object with a send function and onmessage callback property." +
                       " Given is: transport: " + typeof(transport) + ", transport.send: " + typeof(transport.send));

@@ -26,8 +26,9 @@ def getHeartNum():
     return heartInfo
 
 
-def main():
-    app.run(host='127.0.0.1', debug=True, port=8888, use_reloader=False)  # 127.0.0.1 回路 自己返回自己
+def main(port):
+    print('========' + port)
+    app.run(host='127.0.0.1', debug=True, port=port, use_reloader=False)  # 127.0.0.1 回路 自己返回自己
 
 
 # def exit():

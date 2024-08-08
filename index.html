@@ -13,6 +13,7 @@
     <script src="static/element-ui/lib/index.js"></script>
     <script src="static/js/echarts.js"></script>
     <script src="static/js/moment.js"></script>
+    <script src="static/js/jquery.min.js"></script>
 
     <script>
         window.onload = function () {
@@ -20,6 +21,7 @@
                 new QWebChannel(qt.webChannelTransport, function (channel) {
                     //将QWebChannel的实例挂载到window.PyHandler，后面在javascript中通过window.PyHandler即可调用
                     window.PyHandler = channel.objects.PyHandler;
+                    window.console.log('PyHandler 开始挂载')
                 });
             } catch (e) {
                 window.console.log(e)
@@ -230,7 +232,7 @@
             startServer() {
                 this.startServerLoading = true
                 setTimeout(() => {
-                    window.PyHandler.startServer('');
+                    window.PyHandler.startServer(this.form.port);
                 }, 2000)
 
             },
@@ -288,6 +290,20 @@
                 setTimeout(() => {
                     window.PyHandler.disconnectBluetooth('');
                 }, 2000)
+            },
+            getConfig() {
+                const that = this
+                $.getJSON("setting.json", function (data) {
+                    //data 代表读取到的json中的数据
+                    console.log("===> data：", JSON.stringify(data))
+                    debugger
+                    if (data !== null && data !== undefined) {
+                        if (data.hasOwnProperty('port') && data.port !== "") {
+                            that.form.port = data.port
+                        }
+                    }
+                });
+                //window.PyHandler.loadConfig('');
             },
             drawChart() {
                 // 基于准备好的dom，初始化echarts实例  这个和上面的main对应
@@ -357,15 +373,20 @@
             },
         },
         created() {
+            console.log('created')
             // 延时加载，否则未渲染完的页面会出现，影响应用体验 （该方法没有用，要使用template将页面包裹起来）
             /*setTimeout(() => {
                 this.dataLoaded = true;
             }, 100)*/
         },
         mounted() {
+            console.log('mounted')
+
             setTimeout(() => {
-                this.drawChart();
+                this.getConfig();
+                //this.drawChart();
             }, 500)
+
             //this.drawChart();
 
             // 将方法挂载到window便于从webengineview访问
@@ -433,7 +454,7 @@
                 console.log(app.$data.timeList.length)
             }
 
-            // 启动web服务
+            // 启动web服务回调函数
             window.startServer = function (info) {
                 if ('true' === info) {
                     app.$notify.success({
@@ -485,6 +506,14 @@
                 }
 
                 app.$data.stopConnectLoading = false;
+            }
+
+            // 读取配置文件
+            window.loadConfig = function (data) {
+                console.log('data:', data)
+                if (data !== undefined && data !== null && data !== '') {
+                    app.$data.form.port = data
+                }
             }
         }
     });
