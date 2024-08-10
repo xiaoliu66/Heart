@@ -140,7 +140,15 @@
                 </el-tab-pane>
                 <el-tab-pane label="设置" :key="'fourth'">
                     <template>
-                        设置
+                        <el-form ref="formConfig" :model="formConfig" label-width="200px" style="font-size: 15px;font-family: 'Microsoft YaHei'">
+                            <el-form-item label="设备的Characteristic UUID" prop="port" style="font-size: 15px;font-family: 'Microsoft YaHei'">
+                                <el-input v-model="formConfig.uuid"></el-input>
+                            </el-form-item>
+
+                            <el-form-item>
+
+                            </el-form-item>
+                        </el-form>
                     </template>
                 </el-tab-pane>
             </el-tabs>
@@ -176,6 +184,9 @@
             form: {
                 port: 8888,
                 //desc: 'http://localhost:' + this.form.port
+            },
+            formConfig: {
+                uuid: "00002a37-0000-1000-8000-00805f9b34fb",
             },
             activeName: 'first',
             searchLoading: false,
@@ -279,7 +290,7 @@
                     let obj = this.multipleSelection[0];
                     this.connectLoading = true;
                     // let worker = new Worker('./worker.js', {workerData: obj.address + ''});
-                    window.PyHandler.connectBluetooth(obj.address + '')
+                    window.PyHandler.connectBluetooth(obj.address + '#' + this.formConfig.uuid)
                     // this.$message('====>' + JSON.stringify(this.multipleSelection[0]))
 
                 }
@@ -300,6 +311,10 @@
                     if (data !== null && data !== undefined) {
                         if (data.hasOwnProperty('port') && data.port !== "") {
                             that.form.port = data.port
+                        }
+
+                        if (data.hasOwnProperty('uuid') && data.uuid !== "") {
+                            that.formConfig.uuid = data.uuid
                         }
                     }
                 });

@@ -116,12 +116,19 @@ class CallHandler(QObject):
     # 接受前端传过来选择的蓝牙设备id进行连接
     @pyqtSlot(str, result=str)
     def connectBluetooth(self, str_args):
-        print('bluetooth' + str_args + ' connecting......')
+        print('bluetooth ' + str_args + ' connecting......')
         print(str_args)  # 查看参数
-        device_address = str_args
+        words = str_args.split("#")
+        uuid = "";
+        if words[1] == "":
+            uuid = par_notification_characteristic;
+        else:
+            uuid = words[1];
+        device_address = words[0];
         print('thread %s is running...' % threading.current_thread().name)
         global thread1
-        thread1 = myThread(1, "Thread-1", 0, device_address);
+        print(f'device_address is {device_address}, uuid is {uuid}')
+        thread1 = myThread(1, "Thread-1", 0, device_address, uuid);
         try:
             thread1.start()
         except Exception as e:
@@ -189,7 +196,7 @@ class WebEngine(QWebEngineView):
         super(WebEngine, self).__init__()
         self.setContextMenuPolicy(Qt.NoContextMenu)  # 设置右键菜单规则为自定义右键菜单
         # self.customContextMenuRequested.connect(self.showRightMenu)  # 这里加载并显示自定义右键菜单，我们重点不在这里略去了详细带吗
-        self.setWindowTitle('QWebChannel与前端交互')
+        self.setWindowTitle('心跳记录器')
         self.resize(1200, 800)
         # cp = QDesktopWidget().availableGeometry().center()
         # self.move(QPoint(cp.x() - self.width() / 2, cp.y() - self.height() / 2))
@@ -247,26 +254,29 @@ class mySearchThread(threading.Thread):
 class myThread(threading.Thread):
     d_address = "";
 
-    def __init__(self, threadID, name, delay, bluetoothAdresss):
+    def __init__(self, threadID, name, delay, bluetoothAdresss, uuid):
         threading.Thread.__init__(self)
         self.threadID = threadID
         self.name = name
         self.delay = delay
         self.d_address = bluetoothAdresss;
+        self.uuid = uuid;
 
     def run(self):
         print('thread %s is running...' % threading.current_thread().name)
-        asyncio.run(self.startConnect(self.d_address))
+        asyncio.run(self.startConnect(self.d_address, self.uuid))
 
-    async def startConnect(self, device_address):
+    async def startConnect(self, device_address, uuid):
         print('thread %s is running...' % threading.current_thread().name)
-        print('bluetooth device %s start connecting...' % device_address)
+        print(f'bluetooth device {device_address} uuid is {uuid} start connecting...')
         # 基于MAC地址查找设备
         device = await BleakScanner.find_device_by_address(
             device_address, cb=dict(use_bdaddr=False)  # use_bdaddr判断是否是MOC系统
         )
         if device is None:
             print("could not find device with address '%s'", device_address)
+            info = 'false'
+            view.page().runJavaScript("window.getConnectInfo('%s')" % info)
             return
 
         # 事件定义
@@ -298,7 +308,7 @@ class myThread(threading.Thread):
                 description = service.description
                 print('----> description: %s, uuid: %s, characteristics: %s' % (description, uuid, charList))
 
-            await client.start_notify(par_notification_characteristic, notification_handler)
+            await client.start_notify(uuid, notification_handler)
             # 蓝牙连接成功将信息返回给前端
             # 调用Js函数传参时必须要先声明变量再传参，直接传会报错
             info = 'true'
