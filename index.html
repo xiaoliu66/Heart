@@ -117,7 +117,7 @@
                         <p>该功能会启动一个网页服务，将该网址输入到Obs 来源->浏览器中可实现实时心率推送</p>
                         <el-form ref="form" :model="form" label-width="80px">
                             <el-form-item label="端口号" prop="port">
-                                <el-input-number v-model="form.port" :min="1" :max="65535"/>
+                                <el-input-number v-model="form.port" :min="8000" :max="65535"/>
                             </el-form-item>
 
                             <el-form-item label="地址">
@@ -203,7 +203,7 @@
                 console.log('handleSearch:', result)
                 setTimeout(() => {
                     window.PyHandler.getBlueInfo('')
-                }, 3000)
+                }, 4000)
             },
             handleClickTab(tab) {
                 console.log('----tab', tab)

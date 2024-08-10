@@ -4,8 +4,8 @@ import sys
 import os
 import threading
 import urllib.request
+import warnings
 
-import websocket
 from diskcache import Cache
 from PyQt5.QtWidgets import QApplication
 from PyQt5.QtCore import QObject, pyqtSlot, QUrl, Qt
@@ -17,9 +17,13 @@ from bleak import BleakScanner, BleakClient, BleakGATTCharacteristic
 import myapp
 from util.MyWebsocketServer import MyWebsocketServer
 
+
+warnings.filterwarnings("ignore", category=DeprecationWarning)
+
+
 # 设备的Characteristic UUID
 par_notification_characteristic = "00002a37-0000-1000-8000-00805f9b34fb"
-# par_notification_characteristic = "0000180d-0000-1000-8000-00805f9b34fb"
+# par_notification_characteristic = "ebe0ccc1-7a0a-4b0c-8a1a-6ff2997da3a6"
 # 设备的MAC地址
 # device_address = "C8:06:E2:3C:E1:91"
 device_address = ""
