@@ -140,13 +140,16 @@
                 </el-tab-pane>
                 <el-tab-pane label="设置" :key="'fourth'">
                     <template>
-                        <el-form ref="formConfig" :model="formConfig" label-width="200px" style="font-size: 15px;font-family: 'Microsoft YaHei'">
-                            <el-form-item label="设备的Characteristic UUID" prop="port" style="font-size: 15px;font-family: 'Microsoft YaHei'">
+                        <el-form ref="formConfig" :model="formConfig" label-width="200px"
+                                 style="font-size: 15px;font-family: 'Microsoft YaHei'">
+                            <el-form-item label="设备的Characteristic UUID" prop="port"
+                                          style="font-size: 15px;font-family: 'Microsoft YaHei'">
                                 <el-input v-model="formConfig.uuid"></el-input>
                             </el-form-item>
 
                             <el-form-item>
-
+                                <el-button type="primary" @click="onSubmitConfig">保存设置</el-button>
+                                <el-button @click="onBackConfig">还原默认设置</el-button>
                             </el-form-item>
                         </el-form>
                     </template>
@@ -233,6 +236,12 @@
                     type: 'success'
                 });
                 oInput.remove()
+            },
+            onSubmitConfig() {
+                window.PyHandler.onSubmitConfig(JSON.stringify(this.formConfig));
+            },
+            onBackConfig() {
+                window.PyHandler.onBackConfig('');
             },
             rowStyle() {
                 return "text-align:center";
@@ -528,6 +537,21 @@
                 console.log('data:', data)
                 if (data !== undefined && data !== null && data !== '') {
                     app.$data.form.port = data
+                }
+            }
+
+            // 修改设置通知回调
+            window.onSubmitConfig = function (info) {
+                if ('true' === info) {
+                    app.$notify.success({
+                        title: 'success',
+                        message: '设置已修改成功，请重启软件！'
+                    });
+                } else if ('false' === info) {
+                    app.$notify.error({
+                        title: 'error',
+                        message: '设置修改失败！'
+                    });
                 }
             }
         }

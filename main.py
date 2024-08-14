@@ -17,9 +17,9 @@ from bleak import BleakScanner, BleakClient, BleakGATTCharacteristic
 import myapp
 from util.MyWebsocketServer import MyWebsocketServer
 
+from util.ConfigUtil import *
 
 warnings.filterwarnings("ignore", category=DeprecationWarning)
-
 
 # 设备的Characteristic UUID
 par_notification_characteristic = "00002a37-0000-1000-8000-00805f9b34fb"
@@ -190,6 +190,31 @@ class CallHandler(QObject):
             print("list", list)
             view.page().runJavaScript("window.initSearch('%s')" % json.dumps(list))
 
+    @pyqtSlot(str)
+    def onSubmitConfig(self, data):
+        print(f'----- onSubmitConfig {data}-----')
+        try:
+            modify_config_file(data)
+        except Exception as e:
+            print(f"onSubmitConfig An error occurred: {e}")
+            info = 'false'
+            view.page().runJavaScript("window.onSubmitConfig('%s')" % info)
+        else:
+            info = 'true'
+            view.page().runJavaScript("window.onSubmitConfig('%s')" % info)
+
+    @pyqtSlot(str)
+    def onBackConfig(self):
+        print('----- onBackConfig-----')
+        try:
+            default_config()
+        except Exception as e:
+            print(f"onBackConfig An error occurred: {e}")
+            info = 'false'
+            view.page().runJavaScript("window.onSubmitConfig('%s')" % info)
+        else:
+            info = 'true'
+            view.page().runJavaScript("window.onSubmitConfig('%s')" % info)
 
 class WebEngine(QWebEngineView):
     def __init__(self):
