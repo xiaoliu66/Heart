@@ -2,7 +2,7 @@ import os
 import sys
 import time
 
-from flask import Flask
+from flask import Flask, render_template_string
 from flask import render_template  # 渲染
 from diskcache import Cache
 
@@ -28,6 +28,8 @@ def getHeartNum():
 
 def main(port):
     print('========' + port)
+    print(os.getcwd())  # 获取当前工作目录路径
+    print(os.path.abspath('..'))  # 获取当前工作目录路径
     app.run(host='127.0.0.1', debug=True, port=port, use_reloader=False)  # 127.0.0.1 回路 自己返回自己
 
 

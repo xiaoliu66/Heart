@@ -993,7 +993,7 @@ var prevOverflow = '';
       };
       img.onerror = this.handleError.bind(this);
 
-      // bind html attrs
+      // bind web attrs
       // so it can behave consistently
       Object.keys(this.$attrs).forEach(function (key) {
         var value = _this.$attrs[key];

@@ -1,5 +1,7 @@
 import json
 
+from loguru import logger
+
 
 def modify_config_file(str):
     str_json = json.loads(str)
@@ -14,7 +16,7 @@ def modify_config_file(str):
     with open("setting.json", "w") as file:
         json.dump(data, file, indent=2)
 
-    print("JSON文件已成功修改。")
+    logger.info("JSON文件已成功修改。")
 
 
 def default_config():
@@ -29,4 +31,4 @@ def default_config():
     with open("setting.json", "w") as file:
         json.dump(data, file, indent=2)
 
-    print("JSON文件已成功修改。")
+    logger.info("默认配置已成功还原。")

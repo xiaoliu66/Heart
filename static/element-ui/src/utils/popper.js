@@ -91,8 +91,8 @@
      * @param {Array} [popper.classNames=['popper']] Array of classes to apply to the generated popper.
      * @param {Array} [popper.attributes] Array of attributes to apply, specify `attr:value` to assign a value to it.
      * @param {HTMLElement|String} [popper.parent=window.document.body] The parent element, given as HTMLElement or as query string.
-     * @param {String} [popper.content=''] The content of the popper, it can be text, html, or node; if it is not text, set `contentType` to `html` or `node`.
-     * @param {String} [popper.contentType='text'] If `html`, the `content` will be parsed as HTML. If `node`, it will be appended as-is.
+     * @param {String} [popper.content=''] The content of the popper, it can be text, web, or node; if it is not text, set `contentType` to `web` or `node`.
+     * @param {String} [popper.contentType='text'] If `web`, the `content` will be parsed as HTML. If `node`, it will be appended as-is.
      * @param {String} [popper.arrowTagName='div'] Same as `popper.tagName` but for the arrow element.
      * @param {Array} [popper.arrowClassNames='popper__arrow'] Same as `popper.classNames` but for the arrow element.
      * @param {String} [popper.arrowAttributes=['x-arrow']] Same as `popper.attributes` but for the arrow element.

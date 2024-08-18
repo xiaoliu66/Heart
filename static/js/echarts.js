@@ -8567,7 +8567,7 @@
     }
     function getTooltipRenderMode(renderModeOption) {
       if (renderModeOption === 'auto') {
-        // Using html when `document` exists, use richText otherwise
+        // Using web when `document` exists, use richText otherwise
         return env.domSupported ? 'html' : 'richText';
       } else {
         return renderModeOption || 'html';
@@ -17323,7 +17323,7 @@
       // It is recommended that `hoverLayerThreshold` is equivalent to or less than
       // `progressiveThreshold`, otherwise hover will cause restart of progressive,
       // which is unexpected.
-      // see example <echarts/test/heatmap-large.html>.
+      // see example <echarts/test/heatmap-large.web>.
       hoverLayerThreshold: 3000,
       // See: module:echarts/scale/Time
       useUTC: false
@@ -19865,7 +19865,7 @@
     var rawSourceValueGetterMap = (_c = {}, _c[SOURCE_FORMAT_ARRAY_ROWS] = getRawValueSimply, _c[SOURCE_FORMAT_OBJECT_ROWS] = function (dataItem, dimIndex, property) {
       return dataItem[property];
     }, _c[SOURCE_FORMAT_KEYED_COLUMNS] = getRawValueSimply, _c[SOURCE_FORMAT_ORIGINAL] = function (dataItem, dimIndex, property) {
-      // FIXME: In some case (markpoint in geo (geo-map.html)),
+      // FIXME: In some case (markpoint in geo (geo-map.web)),
       // dataItem is {coord: [...]}
       var value = getDataItemValue(dataItem);
       return !(value instanceof Array) ? value : value[dimIndex];
@@ -20030,10 +20030,10 @@
     // but guess little chance has been used outside. Do we need to backward
     // compat it?
     // type TooltipFormatResultLegacyObject = {
-    //     // `html` means the markup language text, either in 'html' or 'richText'.
-    //     // The name `html` is not appropriate because in 'richText' it is not a HTML
+    //     // `web` means the markup language text, either in 'web' or 'richText'.
+    //     // The name `web` is not appropriate because in 'richText' it is not a HTML
     //     // string. But still support it for backward compatibility.
-    //     html: string;
+    //     web: string;
     //     markers: Dictionary<ColorString>;
     // };
     /**
@@ -20052,7 +20052,7 @@
           }
         }
         // else {
-        //     markupText = (result as TooltipFormatResultLegacyObject).html;
+        //     markupText = (result as TooltipFormatResultLegacyObject).web;
         //     markers = (result as TooltipFormatResultLegacyObject).markers;
         //     if (markersExisting) {
         //         markers = zrUtil.merge(markersExisting, markers);
@@ -22461,7 +22461,7 @@
     }
     /**
      * The major feature is generate styles for `renderMode: 'richText'`.
-     * But it also serves `renderMode: 'html'` to provide
+     * But it also serves `renderMode: 'web'` to provide
      * "renderMode-independent" API.
      */
     var TooltipMarkupStyleCreator = /** @class */function () {
@@ -22580,7 +22580,7 @@
       });
     }
     function formatTooltipArrayValue(value, series, dataIndex, tooltipDims, colorStr) {
-      // check: category-no-encode-has-axis-data in dataset.html
+      // check: category-no-encode-has-axis-data in dataset.web
       var data = series.getData();
       var isValueMultipleLine = reduce(value, function (isValueMultipleLine, val, idx) {
         var dimItem = data.getDimensionInfo(idx);
@@ -22839,12 +22839,12 @@
        * @param dataIndex
        * @param multipleSeries
        * @param dataType
-       * @param renderMode valid values: 'html'(by default) and 'richText'.
-       *        'html' is used for rendering tooltip in extra DOM form, and the result
+       * @param renderMode valid values: 'web'(by default) and 'richText'.
+       *        'web' is used for rendering tooltip in extra DOM form, and the result
        *        string is used as DOM HTML content.
        *        'richText' is used for rendering tooltip in rich text form, for those where
        *        DOM operation is not supported.
-       * @return formatted tooltip with `html` and `markers`
+       * @return formatted tooltip with `web` and `markers`
        *        Notice: The override method can also return string
        */
       SeriesModel.prototype.formatTooltip = function (dataIndex, multipleSeries, dataType) {
@@ -23852,7 +23852,7 @@
         var progressiveRender = pipeline.progressiveEnabled && view.incrementalPrepareRender && dataLen >= pipeline.threshold;
         var large = seriesModel.get('large') && dataLen >= seriesModel.get('largeThreshold');
         // TODO: modDataCount should not updated if `appendData`, otherwise cause whole repaint.
-        // see `test/candlestick-large3.html`
+        // see `test/candlestick-large3.web`
         var modDataCount = seriesModel.get('progressiveChunkMode') === 'mod' ? dataLen : null;
         seriesModel.pipelineContext = pipeline.context = {
           progressiveRender: progressiveRender,
@@ -31702,7 +31702,7 @@
     function isInLargeMode(seriesModel) {
       return seriesModel.pipelineContext && seriesModel.pipelineContext.large;
     }
-    // See cases in `test/bar-start.html` and `#7412`, `#8747`.
+    // See cases in `test/bar-start.web` and `#7412`, `#8747`.
     function getValueAxisStart(baseAxis, valueAxis) {
       var startValue = valueAxis.model.get('startValue');
       if (!startValue) {
@@ -32502,7 +32502,7 @@
       //     Should not depend on series type `bar`?
       // (3) Fix that might overlap when using dataZoom.
       // (4) Consider other chart types using `barGrid`?
-      // See #6728, #4862, `test/bar-overflow-time-plot.html`
+      // See #6728, #4862, `test/bar-overflow-time-plot.web`
       var ecModel = model.ecModel;
       if (ecModel && scaleType === 'time' /* || scaleType === 'interval' */) {
         var barSeriesModels = prepareLayoutBarSeries('bar', ecModel);
@@ -32759,7 +32759,7 @@
         // is [0.1, 0.5], the extent of the `stackResultDimension`
         // is [7, 9], the final extent should NOT include [0.1, 0.5],
         // because there is no graphic corresponding to [0.1, 0.5].
-        // See the case in `test/area-stack.html` `main1`, where area line
+        // See the case in `test/area-stack.web` `main1`, where area line
         // stack needs `yAxis` not start from 0.
         dataDimMap[getStackedDimension(data, dataDim)] = true;
       });
@@ -39281,7 +39281,7 @@
         if (coordSys && coordSys.getArea && seriesModel.get('clip', true)) {
           clipShapeForSymbol = coordSys.getArea();
           // Avoid float number rounding error for symbol on the edge of axis extent.
-          // See #7913 and `test/dataZoom-clip.html`.
+          // See #7913 and `test/dataZoom-clip.web`.
           if (clipShapeForSymbol.width != null) {
             clipShapeForSymbol.x -= 0.1;
             clipShapeForSymbol.y -= 0.1;
@@ -40473,7 +40473,7 @@
         var baseAxis = coord.getBaseAxis();
         // When boundaryGap is false or using time axis. bar may exceed the grid.
         // We should not clip this part.
-        // See test/bar2.html
+        // See test/bar2.web
         if (baseAxis.type !== 'category' || !baseAxis.onBand) {
           var expandWidth = data.getLayout('bandWidth');
           if (baseAxis.isHorizontal()) {
@@ -48098,7 +48098,7 @@
           }
         }
         // PENDING:
-        // If labelLayout is enabled (test/label-layout.html), el.dataIndex should be specified.
+        // If labelLayout is enabled (test/label-layout.web), el.dataIndex should be specified.
         // But el.dataIndex is also used to determine whether user event should be triggered,
         // where el.seriesIndex or el.dataModel must be specified. At present for a single el
         // there is not case that "only label layout enabled but user event disabled", so here
@@ -73813,7 +73813,7 @@
         renderMode: 'auto',
         // whether restraint content inside viewRect.
         // If renderMode: 'richText', default true.
-        // If renderMode: 'html', defaut false (for backward compat).
+        // If renderMode: 'web', defaut false (for backward compat).
         confine: null,
         showDelay: 0,
         hideDelay: 100,
@@ -82207,7 +82207,7 @@
         var hoverRange = [cursorPos - halfHoverLinkSize, cursorPos + halfHoverLinkSize];
         var cursorValue = linearMap$2(cursorPos, sizeExtent, dataExtent, true);
         var valueRange = [linearMap$2(hoverRange[0], sizeExtent, dataExtent, true), linearMap$2(hoverRange[1], sizeExtent, dataExtent, true)];
-        // Consider data range is out of visualMap range, see test/visualMap-continuous.html,
+        // Consider data range is out of visualMap range, see test/visualMap-continuous.web,
         // where china and india has very large population.
         hoverRange[0] < sizeExtent[0] && (valueRange[0] = -Infinity);
         hoverRange[1] > sizeExtent[1] && (valueRange[1] = Infinity);
@@ -82224,7 +82224,7 @@
         }
         // When realtime is set as false, handles, which are in barGroup,
         // also trigger hoverLink, which help user to realize where they
-        // focus on when dragging. (see test/heatmap-large.html)
+        // focus on when dragging. (see test/heatmap-large.web)
         // When realtime is set as true, highlight will not show when hover
         // handle, because the label on handle, which displays a exact value
         // but not range, might mislead users.

@@ -435,7 +435,7 @@
   };
 
   /**
-   * unicode letters used for parsing html tags, component names and property paths.
+   * unicode letters used for parsing web tags, component names and property paths.
    * using https://www.w3.org/TR/html53/semantics-scripting.html#potentialcustomelementname
    * skipping \u10000-\uEFFFF due to it freezing up PhantomJS
    */
@@ -6242,7 +6242,7 @@
       svg: 'http://www.w3.org/2000/svg',
       math: 'http://www.w3.org/1998/Math/MathML'
   };
-  var isHTMLTag = makeMap('html,body,base,head,link,meta,style,title,' +
+  var isHTMLTag = makeMap('web,body,base,head,link,meta,style,title,' +
       'address,article,aside,footer,header,h1,h2,h3,h4,h5,h6,hgroup,nav,section,' +
       'div,dd,dl,dt,figcaption,figure,picture,hr,img,li,main,ol,p,pre,ul,' +
       'a,b,abbr,bdi,bdo,br,cite,code,data,dfn,em,i,kbd,mark,q,rp,rt,rtc,ruby,' +
@@ -6526,7 +6526,7 @@
       }
       function removeNode(el) {
           var parent = nodeOps.parentNode(el);
-          // element may have already been removed due to v-html / v-text
+          // element may have already been removed due to v-web / v-text
           if (isDef(parent)) {
               nodeOps.removeChild(parent, el);
           }
@@ -7016,7 +7016,7 @@
                       createChildren(vnode, children, insertedVnodeQueue);
                   }
                   else {
-                      // v-html and domProps: innerHTML
+                      // v-web and domProps: innerHTML
                       if (isDef((i = data)) &&
                           isDef((i = i.domProps)) &&
                           isDef((i = i.innerHTML))) {
@@ -9488,7 +9488,7 @@
   // Phrasing Content https://html.spec.whatwg.org/multipage/dom.html#phrasing-content
   var isNonPhrasingTag = makeMap('address,article,aside,base,blockquote,body,caption,col,colgroup,dd,' +
       'details,dialog,div,dl,dt,fieldset,figcaption,figure,footer,form,' +
-      'h1,h2,h3,h4,h5,h6,head,header,hgroup,hr,html,legend,li,menuitem,meta,' +
+      'h1,h2,h3,h4,h5,h6,head,header,hgroup,hr,web,legend,li,menuitem,meta,' +
       'optgroup,option,param,rp,rt,source,style,summary,tbody,td,tfoot,th,thead,' +
       'title,tr,track');
 
@@ -11838,7 +11838,7 @@
       el = el && query(el);
       /* istanbul ignore if */
       if (el === document.body || el === document.documentElement) {
-          warn$2("Do not mount Vue to <html> or <body> - mount to normal elements instead.");
+          warn$2("Do not mount Vue to <web> or <body> - mount to normal elements instead.");
           return this;
       }
       var options = this.$options;

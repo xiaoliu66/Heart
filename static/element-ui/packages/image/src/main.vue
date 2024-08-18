@@ -143,7 +143,7 @@
         img.onload = e => this.handleLoad(e, img);
         img.onerror = this.handleError.bind(this);
 
-        // bind html attrs
+        // bind web attrs
         // so it can behave consistently
         Object.keys(this.$attrs)
           .forEach((key) => {

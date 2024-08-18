@@ -1,26 +1,30 @@
 import ctypes
 import inspect
+from loguru import logger
 import sys
 import os
 import threading
 import urllib.request
 import warnings
 
+from PyQt5 import QtGui
 from diskcache import Cache
-from PyQt5.QtWidgets import QApplication
+from PyQt5.QtWidgets import QApplication, QMessageBox
 from PyQt5.QtCore import QObject, pyqtSlot, QUrl, Qt
 from PyQt5.QtWebChannel import QWebChannel
 from PyQt5.QtWebEngineWidgets import QWebEngineView
-import json
+
 import asyncio
 from bleak import BleakScanner, BleakClient, BleakGATTCharacteristic
-import myapp
+
+import fastApi
 from util.MyWebsocketServer import MyWebsocketServer
 
 from util.ConfigUtil import *
 
 warnings.filterwarnings("ignore", category=DeprecationWarning)
 
+logger.add("application.log", rotation="50MB", encoding="utf-8", enqueue=True, level="DEBUG")
 # 设备的Characteristic UUID
 par_notification_characteristic = "00002a37-0000-1000-8000-00805f9b34fb"
 # par_notification_characteristic = "ebe0ccc1-7a0a-4b0c-8a1a-6ff2997da3a6"
@@ -40,9 +44,9 @@ async def searchBluetoothDevices():
             name = d.name
 
         bluetooth_info = {"address": d.address, "name": name}
-        print(bluetooth_info)
+        logger.info(bluetooth_info)
         list.append(bluetooth_info)
-    print(list)
+    logger.info(list)
     return json.dumps(list)
 
 
@@ -88,8 +92,7 @@ class CallHandler(QObject):
     # 异步搜索附近的蓝牙设备信息
     @pyqtSlot(str)  # 第一个参数即为回调时携带的参数类型
     def initSearch(self, str_args):
-        print('------> initSearch......')
-        print(str_args)  # 查看参数
+        logger.info(f'------> initSearch......{str_args}')
         global search_thread
         search_thread = mySearchThread(11, "search-Thread", 0);
         search_thread.start()
@@ -116,8 +119,7 @@ class CallHandler(QObject):
     # 接受前端传过来选择的蓝牙设备id进行连接
     @pyqtSlot(str, result=str)
     def connectBluetooth(self, str_args):
-        print('bluetooth ' + str_args + ' connecting......')
-        print(str_args)  # 查看参数
+        logger.info(f'bluetooth {str_args} connecting......')
         words = str_args.split("#")
         uuid = "";
         if words[1] == "":
@@ -125,18 +127,18 @@ class CallHandler(QObject):
         else:
             uuid = words[1];
         device_address = words[0];
-        print('thread %s is running...' % threading.current_thread().name)
+        logger.info('thread %s is running...' % threading.current_thread().name)
         global thread1
-        print(f'device_address is {device_address}, uuid is {uuid}')
+        logger.info(f'device_address is {device_address}, uuid is {uuid}')
         thread1 = myThread(1, "Thread-1", 0, device_address, uuid);
         try:
             thread1.start()
         except Exception as e:
-            print(f"An error occurred: {e}")
+            logger.error(f"An error occurred: {e}")
             info = 'false'
             view.page().runJavaScript("window.getConnectInfo('%s')" % info)
         else:
-            print('-------')
+            logger.info('----connectBluetooth---')
         # asyncio.run(self.startConnect(device_address))
 
     @pyqtSlot()
@@ -147,31 +149,31 @@ class CallHandler(QObject):
 
     @pyqtSlot(result=int)
     def getHeartNum(self):
-        print("getHeartNum:", value)
+        logger.info(f"getHeartNum: {value}")
         view.page().runJavaScript("window.getHeartNum('%s')" % value)
         return value
 
     @pyqtSlot(str)
     def startServer(self, port):
-        print('----- startServer ----- port: ---', port)
+        logger.info(f'----- startServer ----- port: {port}---')
         global server
         server = myServer(2, "Server-1", 0, port);
         try:
             server.start()
         except Exception as e:
-            print(f"An error occurred: {e}")
+            logger.error(f"An error occurred: {e}")
             info = 'false'
-            print(info)
+            logger.info(info)
             view.page().runJavaScript("window.startServer('%s')" % info)
         else:
             info = 'true'
-            print(info)
+            logger.info(info)
             server.terminate()
             view.page().runJavaScript("window.startServer('%s')" % info)
 
     @pyqtSlot()
     def stopServer(self):
-        print('----- stopServer -----')
+        logger.info('----- stopServer -----')
         # myapp.exit()
         stop_thread(server)
         info = 'true'
@@ -187,16 +189,16 @@ class CallHandler(QObject):
             for key, value in data.items():
                 bluetooth_info = {"address": key, "name": value}
                 list.append(bluetooth_info)
-            print("list", list)
+            logger.info(f"list: {list}")
             view.page().runJavaScript("window.initSearch('%s')" % json.dumps(list))
 
     @pyqtSlot(str)
     def onSubmitConfig(self, data):
-        print(f'----- onSubmitConfig {data}-----')
+        logger.info(f'----- onSubmitConfig {data}-----')
         try:
             modify_config_file(data)
         except Exception as e:
-            print(f"onSubmitConfig An error occurred: {e}")
+            logger.error(f"onSubmitConfig An error occurred: {e}")
             info = 'false'
             view.page().runJavaScript("window.onSubmitConfig('%s')" % info)
         else:
@@ -205,16 +207,17 @@ class CallHandler(QObject):
 
     @pyqtSlot(str)
     def onBackConfig(self):
-        print('----- onBackConfig-----')
+        logger.info('----- onBackConfig-----')
         try:
             default_config()
         except Exception as e:
-            print(f"onBackConfig An error occurred: {e}")
+            logger.error(f"onBackConfig An error occurred: {e}")
             info = 'false'
             view.page().runJavaScript("window.onSubmitConfig('%s')" % info)
         else:
             info = 'true'
             view.page().runJavaScript("window.onSubmitConfig('%s')" % info)
+
 
 class WebEngine(QWebEngineView):
     def __init__(self):
@@ -226,6 +229,17 @@ class WebEngine(QWebEngineView):
         # cp = QDesktopWidget().availableGeometry().center()
         # self.move(QPoint(cp.x() - self.width() / 2, cp.y() - self.height() / 2))
 
+    def closeEvent(self, event):
+        reply = QMessageBox.question(self, '确认', '您确定要关闭窗口吗？',
+                                     QMessageBox.Yes | QMessageBox.No,
+                                     QMessageBox.No)
+
+        if reply == QMessageBox.Yes:
+            webSocketServer.stopServer()
+            event.accept()
+        else:
+            event.ignore()
+
 
 # 开启另一个线程去搜索蓝牙设备 不阻塞主线程
 class mySearchThread(threading.Thread):
@@ -236,7 +250,7 @@ class mySearchThread(threading.Thread):
         self.delay = delay
 
     def run(self):
-        print('thread %s is running...' % threading.current_thread().name)
+        logger.info('thread %s is running...' % threading.current_thread().name)
         # self.result = asyncio.run(self.searchBluetoothDevices())
         asyncio.run(self.getOtherDeviceInfo())
         # print("msg：", self.result)
@@ -264,7 +278,7 @@ class mySearchThread(threading.Thread):
 
             dict.update({device.address: name})
 
-            print('dict---->', dict)
+            logger.info('dict----> {dict}', dict=dict)
             cache.set('dict', dict)
 
         async with BleakScanner(callback) as scanner:
@@ -288,18 +302,18 @@ class myThread(threading.Thread):
         self.uuid = uuid;
 
     def run(self):
-        print('thread %s is running...' % threading.current_thread().name)
+        logger.info('thread %s is running...' % threading.current_thread().name)
         asyncio.run(self.startConnect(self.d_address, self.uuid))
 
     async def startConnect(self, device_address, uuid):
-        print('thread %s is running...' % threading.current_thread().name)
-        print(f'bluetooth device {device_address} uuid is {uuid} start connecting...')
+        logger.info('thread %s is running...' % threading.current_thread().name)
+        logger.info(f'bluetooth device {device_address} uuid is {uuid} start connecting...')
         # 基于MAC地址查找设备
         device = await BleakScanner.find_device_by_address(
             device_address, cb=dict(use_bdaddr=False)  # use_bdaddr判断是否是MOC系统
         )
         if device is None:
-            print("could not find device with address '%s'", device_address)
+            logger.error("could not find device with address '%s'", device_address)
             info = 'false'
             view.page().runJavaScript("window.getConnectInfo('%s')" % info)
             return
@@ -309,20 +323,20 @@ class myThread(threading.Thread):
 
         # 断开连接事件回调，当设备断开连接时，会触发该函数，存在一定延迟
         def disconnected_callback(client):
-            print("Disconnected callback called!")
+            logger.error("Disconnected callback called!")
             # 蓝牙连接成功将信息返回给前端
             # 调用Js函数传参时必须要先声明变量再传参，直接传会报错
             info = 'false'
             view.page().runJavaScript("window.getConnectInfo('%s')" % info)
             disconnected_event.set()
 
-        print("connecting to device...")
+        logger.info("connecting to device...")
         async with BleakClient(device, disconnected_callback=disconnected_callback) as client:
-            print("Connected")
+            logger.info("Connected")
             # list = client.get_services()
             list = client.services.services.values()
             for service in list:
-                uuid = service.uuid
+                t_uuid = service.uuid
                 characteristics = service.characteristics
                 charList = []
                 for characteristic in characteristics:
@@ -331,7 +345,7 @@ class myThread(threading.Thread):
                     tempServiceUuid = characteristic.service_uuid
                     charList.append({'tempUuid': tempUuid, 'tempDesc': tempDesc, 'tempServiceUuid': tempServiceUuid})
                 description = service.description
-                print('----> description: %s, uuid: %s, characteristics: %s' % (description, uuid, charList))
+                logger.info('----> description: %s, uuid: %s, characteristics: %s' % (description, t_uuid, charList))
 
             await client.start_notify(uuid, notification_handler)
             # 蓝牙连接成功将信息返回给前端
@@ -369,7 +383,7 @@ def stop_thread(thread):
 # 开启另一个线程去启动web服务
 class myServer(threading.Thread):
     def __init__(self, threadID, name, delay, port):
-        print(f"Starting myServer port:{port}")
+        logger.info(f"Starting myServer port:{port}")
         threading.Thread.__init__(self)
         self.threadID = threadID
         self.name = name
@@ -377,7 +391,8 @@ class myServer(threading.Thread):
         self.port = port
 
     def run(self):
-        myapp.main(self.port)
+        # myapp.main(self.port)
+        fastApi.start(int(self.port))
 
     def terminate(self):
         pass
@@ -396,6 +411,28 @@ class myWebSocketServer(threading.Thread):
 
 
 if __name__ == '__main__':
+    cache = Cache('/cache')
+    s = """                                                                                         
+                                                                          
+            |||      |||    ||||||||       ||||       ||||||||    |||||||||||||          
+            |||      |||    ||||||||      ||||||      |||||||||   |||||||||||||          
+            |||      |||    ||||||||      ||||||      ||||||||||  |||||||||||||          
+            |||      |||    |||           ||||||      |||   ||||       |||               
+            |||      |||    |||          ||||||||     |||    |||       |||               
+            |||      |||    |||          |||  |||     |||    |||       |||               
+            ||||||||||||    |||||||      |||  |||     |||   ||||       |||               
+            ||||||||||||    |||||||     ||||  ||||    |||||||||        |||               
+            ||||||||||||    |||||||     |||    |||    ||||||||         |||               
+            |||      |||    |||         ||||||||||    ||||||||         |||               
+            |||      |||    |||        ||||||||||||   |||  ||||        |||               
+            |||      |||    |||        ||||||||||||   |||   ||||       |||               
+            |||      |||    ||||||||   |||      |||   |||    |||       |||               
+            |||      |||    ||||||||  ||||      ||||  |||    ||||      |||               
+            |||      |||    ||||||||  |||       ||||  |||     ||||     |||               
+            https://github.com/xiaoliu66/Heart                                                                
+                                                                                      
+    """
+    logger.info(s)
     # 实例化缓存对象，指定缓存目录
     cache = Cache('/cache')
     cache.set('value', 0)
@@ -408,11 +445,15 @@ if __name__ == '__main__':
     app = QApplication(sys.argv)
     view = WebEngine()
 
+    icon = QtGui.QIcon()
+    icon.addPixmap(QtGui.QPixmap("static/heart.ico"), QtGui.QIcon.Normal, QtGui.QIcon.Off)
+    app.setWindowIcon(icon)
+
     channel = QWebChannel()
     handler = CallHandler()  # 实例化QWebChannel的前端处理对象
     channel.registerObject('PyHandler', handler)  # 将前端处理对象在前端页面中注册为名PyHandler对象，此对象在前端访问时名称即为PyHandler'
     view.page().setWebChannel(channel)  # 挂载前端处理对象
-    url_string = urllib.request.pathname2url(os.path.join(os.getcwd(), "index.html"))  # 加载本地html文件
+    url_string = urllib.request.pathname2url(os.path.join(os.getcwd(), "./web/index.html"))  # 加载本地html文件
     view.load(QUrl(url_string))
     view.show()
     sys.exit(app.exec_())
