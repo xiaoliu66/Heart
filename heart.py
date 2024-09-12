@@ -15,6 +15,9 @@ from PyQt5.QtWebChannel import QWebChannel
 from PyQt5.QtWebEngineWidgets import QWebEngineView
 
 import asyncio
+import wmi
+
+
 from bleak import BleakScanner, BleakClient, BleakGATTCharacteristic
 
 import fastApi
@@ -32,6 +35,27 @@ par_notification_characteristic = "00002a37-0000-1000-8000-00805f9b34fb"
 # device_address = "C8:06:E2:3C:E1:91"
 device_address = ""
 
+
+def getSystemInfo():
+    import socket, platform
+    hostname = socket.gethostname()
+    ip = socket.gethostbyname(hostname)
+    # print(platform.machine())
+    list_info = platform.uname()
+    # logger.info(list_info)
+    sys_name = list_info[0] + list_info[2]
+    cpu_name = list_info[5]
+    dic_info = {"hostname": hostname, "ip": ip, "sys_name": sys_name, "version": list_info[3], "cpu_name": cpu_name}
+    # 调用js函数，实现回调
+    # self.mainFrame.evaluateJavaScript('%s(%s)' % ('onGetInfo', json.dumps(dic_info)))
+
+    c = wmi.WMI()
+    for cpu in c.Win32_Processor():
+        logger.info(f'CPU: {cpu.Name}')
+    logger.info(f'Hostname: {hostname}')
+    logger.info(f'System: {sys_name}')
+    logger.info(f'Version: {list_info[3]}')
+    # return json.dumps(dic_info)
 
 # 搜索蓝牙设备信息 官网不建议用
 # 这些方法对于简单的程序来说很方便，但不建议用于 更高级的用例，如长时间运行的程序、GUI 或连接到 多个设备。
@@ -104,17 +128,7 @@ class CallHandler(QObject):
         # view.page().runJavaScript("window.get_info('%s')" % info)
         # return 'hello, Python'
 
-    def getInfo(self):
-        import socket, platform
-        hostname = socket.gethostname()
-        ip = socket.gethostbyname(hostname)
-        list_info = platform.uname()
-        sys_name = list_info[0] + list_info[2]
-        cpu_name = list_info[5]
-        dic_info = {"hostname": hostname, "ip": ip, "sys_name": sys_name, "cpu_name": cpu_name}
-        # 调用js函数，实现回调
-        # self.mainFrame.evaluateJavaScript('%s(%s)' % ('onGetInfo', json.dumps(dic_info)))
-        return json.dumps(dic_info)
+
 
     # 接受前端传过来选择的蓝牙设备id进行连接
     @pyqtSlot(str, result=str)
@@ -168,14 +182,19 @@ class CallHandler(QObject):
         else:
             info = 'true'
             logger.info(info)
-            server.terminate()
+            # server.terminate()
             view.page().runJavaScript("window.startServer('%s')" % info)
 
     @pyqtSlot()
     def stopServer(self):
         logger.info('----- stopServer -----')
         # myapp.exit()
-        stop_thread(server)
+        try:
+            stop_thread(server)
+            # server.terminate()
+        except (RuntimeError, TypeError, NameError, SystemExit, Exception) as e:
+            logger.error(f"An error occurred: {e}")
+        # server.terminate()
         info = 'true'
         view.page().runJavaScript("window.stopServer('%s')" % info)
 
@@ -224,7 +243,7 @@ class WebEngine(QWebEngineView):
         super(WebEngine, self).__init__()
         self.setContextMenuPolicy(Qt.NoContextMenu)  # 设置右键菜单规则为自定义右键菜单
         # self.customContextMenuRequested.connect(self.showRightMenu)  # 这里加载并显示自定义右键菜单，我们重点不在这里略去了详细带吗
-        self.setWindowTitle('心跳记录器')
+        self.setWindowTitle('心率记录器')
         self.resize(1200, 800)
         # cp = QDesktopWidget().availableGeometry().center()
         # self.move(QPoint(cp.x() - self.width() / 2, cp.y() - self.height() / 2))
@@ -235,6 +254,7 @@ class WebEngine(QWebEngineView):
                                      QMessageBox.No)
 
         if reply == QMessageBox.Yes:
+            logger.warning("====== closeApp ======")
             webSocketServer.stopServer()
             event.accept()
         else:
@@ -429,7 +449,7 @@ if __name__ == '__main__':
             |||      |||    ||||||||   |||      |||   |||    |||       |||               
             |||      |||    ||||||||  ||||      ||||  |||    ||||      |||               
             |||      |||    ||||||||  |||       ||||  |||     ||||     |||               
-            https://github.com/xiaoliu66/Heart                                                                
+            https://space.bilibili.com/31060761 @六道轮回lk                                                                  
                                                                                       
     """
     logger.info(s)
@@ -438,6 +458,7 @@ if __name__ == '__main__':
     cache.set('value', 0)
     cache.set('maxValue', 0)
     cache.set('minValue', 0)
+    getSystemInfo()
 
     webSocketServer = MyWebsocketServer("localhost", 8000)
     webSocketServer.run()

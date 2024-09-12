@@ -1,4 +1,5 @@
 import logging
+import os
 from types import FrameType
 from typing import cast
 
@@ -47,8 +48,10 @@ class InterceptHandler(logging.Handler):
 
 
 def start(port):
-    config = uvicorn.Config("fastApi:app", host='127.0.0.1', port=port, reload=False)
-    server = uvicorn.Server(config)
+    global config
+    config= uvicorn.Config("fastApi:app", host='127.0.0.1', port=port, reload=False)
+    global webServer
+    webServer = uvicorn.Server(config)
 
     # 将uvicorn输出的全部让loguru管理
     LOGGER_NAMES = ("uvicorn.asgi", "uvicorn.access", "uvicorn")
@@ -59,7 +62,7 @@ def start(port):
         logging_logger = logging.getLogger(logger_name)
         logging_logger.handlers = [InterceptHandler()]
 
-    server.run()
+    webServer.run()
     # uvicorn.run(app="fastApi:app", host="127.0.0.1", port=port, reload=False)
 
 

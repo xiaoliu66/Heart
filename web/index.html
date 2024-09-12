@@ -107,7 +107,8 @@
                         </div>
 
 
-                        <div id="main" style="width: 148vh; height: 90vh; margin-left: -7%; position: absolute">
+                        <div id="main" style="width: 148vh; height: 90vh; margin-left: -7%; position: absolute"
+                             ref="chart">
 
                         </div>
                     </template>
@@ -152,6 +153,11 @@
                                 <el-button @click="onBackConfig">还原默认设置</el-button>
                             </el-form-item>
                         </el-form>
+                    </template>
+                </el-tab-pane>
+                <el-tab-pane label="关于" :key="'five'">
+                    <template>
+                        心率记录器 <a href="">https://space.bilibili.com/31060761 @六道轮回lk</a>
                     </template>
                 </el-tab-pane>
             </el-tabs>
@@ -201,6 +207,63 @@
             stopServerLoading: false,
             visibleStartServer: '',
             visibleStopServer: 'none',
+            chartOption: {
+                xAxis: {
+                    type: 'category',
+                    boundaryGap: false,
+                    // data: ['1', '2', '3', '4', '5', '6', '7', '1', '2', '3', '4', '5', '6', '7','1', '2', '3', '4', '5', '6', '7','1', '2', '3', '4', '5', '6', '7']
+                    //data: this.timeList
+                    data: []
+                    // data: ["2024-07-29 22:04:48", "2024-07-29 22:04:49", "2024-07-29 22:04:50", "2024-07-29 22:04:51", "2024-07-29 22:04:52", "2024-07-29 22:04:53", "2024-07-29 22:04:54", "2024-07-29 22:04:55", "2024-07-29 22:04:56", "2024-07-29 22:04:57"]
+                },
+                yAxis: {
+                    type: 'value'
+                },
+                series: [
+                    {
+                        // data: [
+                        //     820, 932, 901, 934, 1290, 1330, 1320, 820, 932, 901, 934, 1290, 1330,
+                        //     1320
+                        // ],
+                        //data: this.heartNumList,
+                        data: [],
+                        // data: ["92", "89", "89", "89", "86", "84", "84", "84", "84", "83", "92", "89", "89", "89", "86", "84", "84", "84", "84", "83","92", "89", "89", "89", "86", "84", "84","92", "89", "89", "89", "86", "84", "84"],
+                        type: 'line',
+                        smooth: false,      //true 有弧度 ，false 没弧度（直线）
+                        symbol: 'circle',   //将小圆点改成实心 不写symbol默认空心
+                        symbolSize: 5,    //小圆点的大小
+                        areaStyle: {
+                            color: {
+                                type: 'linear',
+                                x: 0,
+                                y: 0,
+                                x2: 0,
+                                y2: 1,
+                                // 渐变颜色
+                                colorStops: [
+                                    {
+                                        offset: 0,
+                                        color: '#e61919'
+                                    },
+                                    {
+                                        offset: 1,
+                                        color: '#d98a92'
+                                    }
+                                ],
+                                global: false
+                            }
+                        },
+                        itemStyle: {
+                            normal: {
+                                color: '#ff0000', //改变折线点的颜色
+                                lineStyle: {
+                                    color: '#ff0000' //改变折线颜色
+                                }
+                            }
+                        },
+                    }
+                ]
+            }
 
         },
         computed: {
@@ -330,70 +393,85 @@
                 //window.PyHandler.loadConfig('');
             },
             drawChart() {
-                // 基于准备好的dom，初始化echarts实例  这个和上面的main对应
-                var myChart = echarts.init(document.getElementById('main'));
-                window.addEventListener('resize', function () {
-                    myChart.resize();
-                });
-                // 指定图表的配置项和数据
-                let option = {
-                    xAxis: {
-                        type: 'category',
-                        boundaryGap: false,
-                        // data: ['1', '2', '3', '4', '5', '6', '7', '1', '2', '3', '4', '5', '6', '7','1', '2', '3', '4', '5', '6', '7','1', '2', '3', '4', '5', '6', '7']
-                        data: this.timeList
-                        // data: ["2024-07-29 22:04:48", "2024-07-29 22:04:49", "2024-07-29 22:04:50", "2024-07-29 22:04:51", "2024-07-29 22:04:52", "2024-07-29 22:04:53", "2024-07-29 22:04:54", "2024-07-29 22:04:55", "2024-07-29 22:04:56", "2024-07-29 22:04:57"]
-                    },
-                    yAxis: {
-                        type: 'value'
-                    },
-                    series: [
-                        {
-                            // data: [
-                            //     820, 932, 901, 934, 1290, 1330, 1320, 820, 932, 901, 934, 1290, 1330,
-                            //     1320
-                            // ],
-                            data: this.heartNumList,
-                            // data: ["92", "89", "89", "89", "86", "84", "84", "84", "84", "83", "92", "89", "89", "89", "86", "84", "84", "84", "84", "83","92", "89", "89", "89", "86", "84", "84","92", "89", "89", "89", "86", "84", "84"],
-                            type: 'line',
-                            smooth: false,      //true 有弧度 ，false 没弧度（直线）
-                            symbol: 'circle',   //将小圆点改成实心 不写symbol默认空心
-                            symbolSize: 5,    //小圆点的大小
-                            areaStyle: {
-                                color: {
-                                    type: 'linear',
-                                    x: 0,
-                                    y: 0,
-                                    x2: 0,
-                                    y2: 1,
-                                    // 渐变颜色
-                                    colorStops: [
-                                        {
-                                            offset: 0,
-                                            color: '#e61919'
-                                        },
-                                        {
-                                            offset: 1,
-                                            color: '#d98a92'
-                                        }
-                                    ],
-                                    global: false
-                                }
-                            },
-                            itemStyle: {
-                                normal: {
-                                    color: '#ff0000', //改变折线点的颜色
-                                    lineStyle: {
-                                        color: '#ff0000' //改变折线颜色
+                // 获取当前DOM元素上的echarts实例
+                //document.getElementById('main')
+                var chartData = this.$refs.chart;
+                if (chartData !== undefined) {
+                    var myChart = echarts.getInstanceByDom(chartData);
+                    // 如果实例存在，销毁它
+                    if (myChart) {
+                        myChart.dispose();
+                    }
+                    // 基于准备好的dom，初始化echarts实例  这个和上面的main对应
+                    myChart = echarts.init(chartData, null, {notMerge: false});
+
+                    // 指定图表的配置项和数据
+                    /*let option = {
+                        xAxis: {
+                            type: 'category',
+                            boundaryGap: false,
+                            // data: ['1', '2', '3', '4', '5', '6', '7', '1', '2', '3', '4', '5', '6', '7','1', '2', '3', '4', '5', '6', '7','1', '2', '3', '4', '5', '6', '7']
+                            data: this.timeList
+                            // data: ["2024-07-29 22:04:48", "2024-07-29 22:04:49", "2024-07-29 22:04:50", "2024-07-29 22:04:51", "2024-07-29 22:04:52", "2024-07-29 22:04:53", "2024-07-29 22:04:54", "2024-07-29 22:04:55", "2024-07-29 22:04:56", "2024-07-29 22:04:57"]
+                        },
+                        yAxis: {
+                            type: 'value'
+                        },
+                        series: [
+                            {
+                                // data: [
+                                //     820, 932, 901, 934, 1290, 1330, 1320, 820, 932, 901, 934, 1290, 1330,
+                                //     1320
+                                // ],
+                                data: this.heartNumList,
+                                // data: ["92", "89", "89", "89", "86", "84", "84", "84", "84", "83", "92", "89", "89", "89", "86", "84", "84", "84", "84", "83","92", "89", "89", "89", "86", "84", "84","92", "89", "89", "89", "86", "84", "84"],
+                                type: 'line',
+                                smooth: false,      //true 有弧度 ，false 没弧度（直线）
+                                symbol: 'circle',   //将小圆点改成实心 不写symbol默认空心
+                                symbolSize: 5,    //小圆点的大小
+                                areaStyle: {
+                                    color: {
+                                        type: 'linear',
+                                        x: 0,
+                                        y: 0,
+                                        x2: 0,
+                                        y2: 1,
+                                        // 渐变颜色
+                                        colorStops: [
+                                            {
+                                                offset: 0,
+                                                color: '#e61919'
+                                            },
+                                            {
+                                                offset: 1,
+                                                color: '#d98a92'
+                                            }
+                                        ],
+                                        global: false
                                     }
-                                }
-                            },
-                        }
-                    ]
-                };
-                // 使用刚指定的配置项和数据显示图表。
-                myChart.setOption(option);
-                myChart.resize();
+                                },
+                                itemStyle: {
+                                    normal: {
+                                        color: '#ff0000', //改变折线点的颜色
+                                        lineStyle: {
+                                            color: '#ff0000' //改变折线颜色
+                                        }
+                                    }
+                                },
+                            }
+                        ]
+                    };*/
+                    // 使用刚指定的配置项和数据显示图表。
+                    this.chartOption.xAxis.data = this.timeList;
+                    this.chartOption.series[0].data = this.heartNumList;
+
+                    myChart.setOption(this.chartOption);
+                    window.addEventListener('resize', function () {
+                        myChart.resize();
+                    });
+                    myChart.resize();
+                }
+
             },
         },
         created() {
@@ -408,7 +486,7 @@
 
             setTimeout(() => {
                 this.getConfig();
-                //this.drawChart();
+                this.drawChart();
             }, 500)
 
             //this.drawChart();
@@ -454,7 +532,7 @@
                 num = parseInt(num)
                 let date = new Date();
                 let time = moment(date).format("HH:mm:ss")
-                console.log('=====> time：' + time)
+                //console.log('=====> time：' + time)
                 /*app.$notify.success({
                     title: 'success',
                     message: num
@@ -474,8 +552,8 @@
                     app.$data.minHeartNum = num
                 }
                 app.drawChart();
-                console.log(app.$data.heartNumList.length)
-                console.log(app.$data.timeList.length)
+                //console.log(app.$data.heartNumList.length)
+                //console.log(app.$data.timeList.length)
             }
 
             // 启动web服务回调函数
