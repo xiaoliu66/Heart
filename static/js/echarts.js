@@ -28159,7 +28159,9 @@
         }
         if ("development" !== 'production') {
           if (isDom(dom) && dom.nodeName.toUpperCase() !== 'CANVAS' && (!dom.clientWidth && (!opts || opts.width == null) || !dom.clientHeight && (!opts || opts.height == null))) {
-            warn('Can\'t get DOM width or height. Please check ' + 'dom.clientWidth and dom.clientHeight. They should not be 0.' + 'For example, you may need to call this in the callback ' + 'of window.onload.');
+              // 2024.9.12 屏蔽echarts 警告信息 [ECharts] Can't get DOM width or height. Please check dom.clientWidth and dom.clientHeight.
+            // They should not be 0.For example, you may need to call this in the callback of window.onload.
+            //warn('Can\'t get DOM width or height. Please check ' + 'dom.clientWidth and dom.clientHeight. They should not be 0.' + 'For example, you may need to call this in the callback ' + 'of window.onload.');
           }
         }
       }
