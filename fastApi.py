@@ -50,6 +50,7 @@ class InterceptHandler(logging.Handler):
 def start(port):
     global config
     config= uvicorn.Config("fastApi:app", host='127.0.0.1', port=port, reload=False)
+    # config = uvicorn.Config("fastApi:app", host='0.0.0.0', port=port, reload=False)
     global webServer
     webServer = uvicorn.Server(config)
 

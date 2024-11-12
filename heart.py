@@ -1,5 +1,9 @@
 import ctypes
 import inspect
+
+
+import psutil
+from GPUtil import GPUtil
 from loguru import logger
 import sys
 import os
@@ -16,7 +20,6 @@ from PyQt5.QtWebEngineWidgets import QWebEngineView
 
 import asyncio
 import wmi
-
 
 from bleak import BleakScanner, BleakClient, BleakGATTCharacteristic
 
@@ -48,14 +51,31 @@ def getSystemInfo():
     dic_info = {"hostname": hostname, "ip": ip, "sys_name": sys_name, "version": list_info[3], "cpu_name": cpu_name}
     # 调用js函数，实现回调
     # self.mainFrame.evaluateJavaScript('%s(%s)' % ('onGetInfo', json.dumps(dic_info)))
+    memory = psutil.virtual_memory()
 
     c = wmi.WMI()
     for cpu in c.Win32_Processor():
         logger.info(f'CPU: {cpu.Name}')
+    logger.info(f"Total Memory: {memory.total / (1024 ** 3):.2f} GB")
     logger.info(f'Hostname: {hostname}')
     logger.info(f'System: {sys_name}')
     logger.info(f'Version: {list_info[3]}')
+
+    # 获取所有 GPU 信息
+    gpus = GPUtil.getGPUs()
+
+    for gpu in gpus:
+        logger.info(f"GPU ID: {gpu.id}")
+        logger.info(f"GPU Name: {gpu.name}")
+        logger.info(f"GPU Load: {gpu.load * 100:.2f}%")
+        logger.info(f"GPU Free Memory: {gpu.memoryFree} MB")
+        logger.info(f"GPU Used Memory: {gpu.memoryUsed} MB")
+        logger.info(f"GPU Total Memory: {gpu.memoryTotal} MB")
+        logger.info(f"GPU Temperature: {gpu.temperature} °C")
+        logger.info(f"GPU UUID: {gpu.uuid}")
+
     # return json.dumps(dic_info)
+
 
 # 搜索蓝牙设备信息 官网不建议用
 # 这些方法对于简单的程序来说很方便，但不建议用于 更高级的用例，如长时间运行的程序、GUI 或连接到 多个设备。
@@ -351,7 +371,8 @@ class myThread(threading.Thread):
             disconnected_event.set()
 
         logger.info("connecting to device...")
-        async with BleakClient(device, disconnected_callback=disconnected_callback) as client:
+        async with BleakClient(device, disconnected_callback=disconnected_callback,
+                               winrt=dict(use_cached_services=False)) as client:
             logger.info("Connected")
             # list = client.get_services()
             list = client.services.services.values()
@@ -461,6 +482,7 @@ if __name__ == '__main__':
     getSystemInfo()
 
     webSocketServer = MyWebsocketServer("localhost", 8000)
+    # webSocketServer = MyWebsocketServer("0.0.0.0", 8000)
     webSocketServer.run()
     # 加载程序主窗口
     app = QApplication(sys.argv)
