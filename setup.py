@@ -15,12 +15,15 @@ options = {
     'build_exe': {
         'build_exe': 'heart',  # 编译输出的文件目录
         'include_files': files,  # 需要包含的其他文件
-        'packages': ['uvicorn', 'diskcache', 'PyQt5', 'bleak', 'fastapi', 'loguru'],  # 需要包含的依赖库
+        'packages': ['PyQt5.QtWidgets', 'PyQt5.QtCore', 'PyQt5.QtWebChannel', 'PyQt5.QtWebEngineWidgets','uvicorn',
+                     'diskcache',  'bleak', 'fastapi', 'loguru'],  # 需要包含的依赖库
         "zip_include_packages": ['uvicorn', 'diskcache', 'bleak', 'fastapi'],
-        # 剔除不需要的包
+        # 剔除不需要的包 (这个根据自己的本地依赖包情况来看，如果安装了anaconda3 就需要排除很多的包，不然打包后的体积非常惊人 6.34GB)
+        # 剔除了tzdata, 打包目录下就会出现zoneinfo 时区转换这个库。
         "excludes": ['tkinter', 'numpy', 'pandas', 'matplotlib', 'numpydoc', 'OpenSSL', 'paramiko', 'tornado',
                      'chardet', 'docutils', 'email', 'jupyter', 'urllib3', 'yaml', 'zmq', 'jedi',
-                     'requests', 'pygments', 'pillow', 'jupyter_client', 'jupyter_core', 'ipython'],
+                     'requests', 'pygments', 'pillow', 'jupyter_client', 'jupyter_core', 'ipython', 'debugpy',
+                     'tzdata'],
 
     },
 }

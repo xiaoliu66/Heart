@@ -22,7 +22,7 @@ class MyWebsocketServer:
     async def echo(self, websocket):
         logger.info("------ Echoing WebSocket --------")
         async for message in websocket:
-            logger.info(message)
+            logger.info(f'------ WebSockert server recive messages: {message}')
             # await websocket.send("Received: " + message)
 
             while True:
@@ -36,13 +36,14 @@ class MyWebsocketServer:
                 await asyncio.sleep(0.5)
 
     def connect(self):
-        logger.info("======== websocket server is start ... ========")
+        logger.info("======== websocket server is starting up ... ========")
         asyncio.set_event_loop(asyncio.new_event_loop())
         start_server = websockets.serve(self.echo, self.host, self.port)
         asyncio.get_event_loop().run_until_complete(start_server)
         asyncio.get_event_loop().run_forever()
         logger.info("连接成功！")
 
+    # 另开启一个线程,用于启动websocket服务。
     def run(self):
         t = threading.Thread(target=self.connect)
         t.start()
